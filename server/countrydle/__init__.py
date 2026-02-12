@@ -17,6 +17,7 @@ from schemas.countrydle import (
     QuestionCreate,
     QuestionDisplay,
 )
+from schemas.country import CountryDisplay
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -102,6 +103,13 @@ async def get_end_state(
     )
 
 
+@router.get("/countries", response_model=list[CountryDisplay])
+async def get_countries(
+    session: AsyncSession = Depends(get_db),
+):
+    return await CountryRepository(session).get_all_countries()
+
+
 @router.post("/guess", response_model=GuessDisplay)
 async def get_game(
     guess: GuessBase,
@@ -124,11 +132,14 @@ async def get_game(
             detail="User finished the game already!",
         )
 
-    answer_dict = await gutils.give_guess(
-        guess=guess.guess, daily_country=daily_country, user=user, session=session
-    )
-
-    answer: bool = answer_dict["answer"]
+    if guess.country_id:
+        answer = guess.country_id == daily_country.country_id
+    else:
+        # Fallback to old logic if country_id is not provided (optional)
+        answer_dict = await gutils.give_guess(
+            guess=guess.guess, daily_country=daily_country, user=user, session=session
+        )
+        answer: bool = answer_dict["answer"]
 
     guess_create = GuessCreate(
         guess=guess.guess,

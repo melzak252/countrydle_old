@@ -1,17 +1,20 @@
 <template>
   <v-card class="pa-4 guess-box">
-    <v-card-title  @click="toggleCollapse" style="cursor: pointer; display: flex;">
-      Make a Guess <v-icon style="margin-left: auto;">{{ isCollapsed ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+    <v-card-title @click="toggleCollapse" style="cursor: pointer; display: flex;">
+      Make a Guess <v-icon style="margin-left: auto;">{{ isCollapsed ? 'mdi-chevron-up' : 'mdi-chevron-down'
+        }}</v-icon>
     </v-card-title>
     <p style="padding-left: 1rem; padding-bottom: 2px;">You have {{ remainingGuesses }} guesses remaining.</p>
     <v-expand-transition>
       <div v-show="isCollapsed">
         <div class="guess-container">
-          <v-text-field maxlength="30" v-model="guessInput" label="Guess the Country" placeholder="Enter your guess..."
-            @keyup.enter="sendGuess" :disabled="remainingGuesses <= 0 || loading || isGameOver" :rules="guessRules"
-            class="ma-0 mb-4 guess-input"></v-text-field>
+          <v-autocomplete v-model="selectedCountry" :items="countries" item-title="name" item-value="id"
+            label="Select a Country" placeholder="Start typing to search..." :loading="loadingCountries"
+            :disabled="remainingGuesses <= 0 || loading || isGameOver" return-object class="ma-0 mb-4 guess-input"
+            hide-no-data hide-details></v-autocomplete>
+
           <v-btn @click="sendGuess" color="primary" class="guess-button"
-            :disabled="remainingGuesses <= 0 || loading || isGameOver || !guessInput">
+            :disabled="remainingGuesses <= 0 || loading || isGameOver || !selectedCountry">
             <template v-if="loading">
               <v-progress-circular indeterminate color="white" size="24" class="mr-2"></v-progress-circular>
             </template>
@@ -26,8 +29,10 @@
         <v-row>
           <v-col v-for="(entry, index) in guessHistory" :key="index" cols="12">
             <v-card outlined :class="getRowClass(entry.answer)" class="pa-4 guess-card">
-              <v-card-title style="align-items: center; width: min-content; max-width: calc(100% - 75px);">{{ entry.guess }} </v-card-title>
-              <v-icon size="50">{{ entry.answer? 'mdi-check-bold': (entry.answer===null? 'mdi-help': 'mdi-close-thick') }}</v-icon>
+              <v-card-title style="align-items: center; width: min-content; max-width: calc(100% - 75px);">{{
+                entry.guess }} </v-card-title>
+              <v-icon size="50">{{ entry.answer ? 'mdi-check-bold' : (entry.answer === null ? 'mdi-help' :
+                'mdi-close-thick') }}</v-icon>
             </v-card>
           </v-col>
         </v-row>
@@ -37,8 +42,9 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref } from 'vue';
+import { computed, defineComponent, onMounted, ref } from 'vue';
 import { useCountrydleStore } from '../stores/countrydle'; // Import Pinia store
+import { apiService } from '../services/api';
 
 export default defineComponent({
   name: 'GuessBox',
@@ -52,7 +58,10 @@ export default defineComponent({
     const remainingGuesses = computed(() => gameStore.remainingGuesses)
     const loading = computed(() => gameStore.loading)
     const isCollapsed = ref(true)
-    const guessInput = ref('');
+    const selectedCountry = ref<{ id: number, name: string } | null>(null);
+    const countries = ref<{ id: number, name: string }[]>([]);
+    const loadingCountries = ref(false);
+
 
     const toggleCollapse = () => {
       isCollapsed.value = !isCollapsed.value;
@@ -65,24 +74,36 @@ export default defineComponent({
     };
 
     const sendGuess = () => {
-      guessInput.value = guessInput.value.trim();
-      if (!guessInput.value) return;
-      const guess = guessInput.value;
-      gameStore.makeGuess(guess);
-      guessInput.value = "";
+      if (!selectedCountry.value) return;
+      
+      gameStore.makeGuess(selectedCountry.value.name, selectedCountry.value.id);
+      selectedCountry.value = null;
     };
 
-    const guessRules = [
-      // (v: string): string | boolean => !!v || 'Guess is required!',
-      (v: string): string | boolean => v.length <= 30 || 'Guess cannot be longer than 30 characters!'
-    ];
+    const fetchCountries = async () => {
+      loadingCountries.value = true;
+      try {
+        const response = await apiService.getCountries();
+        countries.value = response.data;
+      } catch (error) {
+        console.error("Failed to fetch countries", error);
+      } finally {
+        loadingCountries.value = false;
+      }
+    }
+
+    onMounted(() => {
+      fetchCountries();
+    })
+
     return {
-      guessInput,
+      selectedCountry,
+      countries,
+      loadingCountries,
       remainingGuesses,
       isGameOver,
       guessHistory,
       loading,
-      guessRules,
       isCollapsed,
       getRowClass,
       sendGuess,

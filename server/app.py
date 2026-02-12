@@ -36,7 +36,14 @@ from utils.email import fm_noreply
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:80",
+        "http://localhost",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:80",
+        "http://127.0.0.1",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -68,11 +75,11 @@ async def login(
     ):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
-    if not user.verified:
-        raise HTTPException(
-            status_code=400,
-            detail="User's email is not verified! Verify your email before login!",
-        )
+    # if not user.verified:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail="User's email is not verified! Verify your email before login!",
+    #     )
 
     access_token = create_access_token(data={"sub": user.username})
 
@@ -80,8 +87,8 @@ async def login(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=True,  # Set to True in production
-        samesite="Lax",
+        secure=False,  # Set to False for local development (HTTP)
+        samesite="lax",
         path="/",
     )
 
@@ -116,8 +123,8 @@ async def google_signin(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=True,  # Set to True in production
-        samesite="Lax",
+        secure=False,  # Set to False for local development (HTTP)
+        samesite="lax",
         path="/",
     )
     return user
@@ -129,9 +136,9 @@ async def logout(response: Response):
         key="access_token",
         value="",
         httponly=True,
-        secure=True,  # Set to True in production
+        secure=False,  # Set to False for local development (HTTP)
         expires=datetime.datetime.now().isoformat(),
-        samesite="Lax",
+        samesite="lax",
         path="/",
     )
     return {"success": True}
@@ -144,8 +151,8 @@ async def register(
     session: AsyncSession = Depends(get_db),
 ):
     new_user = await UserRepository(session).register_user(user=user)
-    await send_verification_email(new_user, background_tasks)
-    return {"message": "Verification email sent!", "ok": True}
+    # await send_verification_email(new_user, background_tasks)
+    return {"message": "User registered successfully!", "ok": True}
 
 
 @app.get("/verify-email")

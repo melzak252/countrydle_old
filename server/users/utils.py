@@ -71,10 +71,22 @@ def verify_email_token(token: str):
 async def get_current_user(
     access_token: str = Cookie(None), session: AsyncSession = Depends(get_db)
 ) -> User:
-    username = verify_access_token(access_token)
-    user = await UserRepository(session).get_veified_user_by_username(username)
+    print(f"DEBUG: get_current_user called. Token: {access_token}")
+    if access_token is None:
+        print("DEBUG: Token is None")
+    
+    try:
+        username = verify_access_token(access_token)
+        print(f"DEBUG: Username from token: {username}")
+    except Exception as e:
+        print(f"DEBUG: verify_access_token failed: {e}")
+        raise
+
+    user = await UserRepository(session).get_user(username)
+    print(f"DEBUG: User found in DB: {user}")
 
     if not user:
+        print("DEBUG: User not found in DB")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

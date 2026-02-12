@@ -92,8 +92,11 @@ export const apiService = {
     return apiClient.post('/countrydle/question', { question });
   },
 
-  makeGuess(guess: string) {
-    return apiClient.post('/countrydle/guess', { guess });  // Submit a guess
+  makeGuess(guess: string, country_id?: number) {
+    return apiClient.post('/countrydle/guess', { guess, country_id });  // Submit a guess
+  },
+  getCountries() {
+    return apiClient.get('/countrydle/countries');
   },
 
   endGame() {

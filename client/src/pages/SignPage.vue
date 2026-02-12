@@ -117,7 +117,7 @@ export default defineComponent({
           username: usernameReg.value,
           password: passwordReg.value
         });
-        if (response && response.data.ok) {
+        if (response && response.data && response.data.ok) {
           popUp(
             `User: ${usernameReg.value} successfully registered!`,
             `Go to verify your email to login!`
@@ -125,9 +125,10 @@ export default defineComponent({
           return;
         }
 
+        const errorDetail = response?.data?.detail || 'Network error or server unreachable';
         popUp(
           'Registration failed.',
-          response.data.detail
+          errorDetail
         );
       } catch (error: any) {
         popUp(

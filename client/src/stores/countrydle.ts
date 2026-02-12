@@ -116,12 +116,12 @@ export const useCountrydleStore = defineStore('countrydle', {
         this.loading = false;
       }
     },
-    async makeGuess(guess: string) {
+    async makeGuess(guess: string, country_id?: number) {
       if (this.remainingGuesses <= 0 || this.isGameOver) return;
 
       this.loading = true;
       try {
-        const response = await apiService.makeGuess(guess);  
+        const response = await apiService.makeGuess(guess, country_id);  
         this.guessHistory.push({ guess, answer: response.data.answer });
         this.remainingGuesses--;
 

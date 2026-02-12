@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', {
             this.isGoogle = false;
         } catch(error: any) {
             this.error = true;
-            this.errorMessage = error.response.data.detail;
+            this.errorMessage = error.response?.data?.detail || 'Login failed';
             await this.logout()
             return;
         }
@@ -83,7 +83,7 @@ export const useAuthStore = defineStore('auth', {
             return apiUser;
         } catch (err: any) {
             this.error = true;
-            this.errorMessage = err.response.data.detail;
+            this.errorMessage = err.response?.data?.detail || 'Failed to fetch user';
             return null;
         }
         
@@ -104,7 +104,7 @@ export const useAuthStore = defineStore('auth', {
             this.isGoogle = true;
         } catch (error: any) {
             this.error = true;
-            this.errorMessage = error.response.data.detail;
+            this.errorMessage = error.response?.data?.detail || 'Google Sign-In failed';
             await this.logout()
         }
     },
@@ -123,7 +123,7 @@ export const useAuthStore = defineStore('auth', {
 
         } catch (error: any) {
             this.error = true;
-            this.errorMessage = error.response.data.detail;
+            this.errorMessage = error.response?.data?.detail || 'Update failed';
             await this.logout()
             return error.response;
         }
@@ -140,7 +140,7 @@ export const useAuthStore = defineStore('auth', {
             return response;
         } catch (error: any) {
             this.error = true;
-            this.errorMessage = error.response.data.detail;
+            this.errorMessage = error.response?.data?.detail || 'Change password failed';
             return error.response;
         }
     }

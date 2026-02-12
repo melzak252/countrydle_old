@@ -10,8 +10,9 @@ python-jose[cryptography]
 passlib
 python-multipart
 apscheduler
-qdrant-client
+qdrant-client>=1.7.0
 pgvector
 fastapi-mail
 alembic
 requests
+langchain-text-splitters

@@ -71,6 +71,8 @@ class InvalidQuestionDisplay(BaseModel):
 # Guess Schema
 class GuessBase(BaseModel):
     guess: str
+    country_id: int | None = None
+
 
 
 class GuessCreate(GuessBase):

@@ -18,7 +18,7 @@ class GuessRepository:
         return result.scalars().first()
 
     async def add_guess(self, guess: GuessCreate) -> Guess:
-        new_entry = Guess(**guess.model_dump())
+        new_entry = Guess(**guess.model_dump(exclude={"country_id"}))
 
         self.session.add(new_entry)
 

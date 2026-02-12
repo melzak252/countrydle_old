@@ -46,9 +46,9 @@ def search_matches(
     country_id: int = None,
     limit: int = 5,
 ) -> List[ScoredPoint]:
-    search_result: GroupsResult = qdrant.client.search_groups(
+    search_result: GroupsResult = qdrant.client.query_points_groups(
         collection_name=collection_name,
-        query_vector=query_vector,  # Use the query vector to search for similar vectors
+        query=query_vector,  # Use the query vector to search for similar vectors
         group_by="country_id",  # Group results by country_id
         group_size=limit,  # Return up to 5 points per group
         limit=1,  # Limit to 3 groups (you can adjust as needed)
@@ -62,6 +62,8 @@ def search_matches(
         ),
         with_payload=True,
     )
+    if not search_result.groups:
+        return []
     group, *_ = search_result.groups
     return group.hits
 

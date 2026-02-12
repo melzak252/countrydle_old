@@ -91,7 +91,7 @@ class UserRepository:
 
         hashed_password = User.hash_password(user.password)
         new_user = User(
-            username=user.username, email=user.email, hashed_password=hashed_password
+            username=user.username, email=user.email, hashed_password=hashed_password, verified=True
         )
         self.session.add(new_user)
         await self.session.commit()
