@@ -141,6 +141,8 @@ class CountrydleStateResponse(BaseModel):
     state: CountrydleStateSchema
     questions: List[QuestionDisplay | InvalidQuestionDisplay] = []
     guesses: List[GuessDisplay] = []
+    country: CountryDisplay | None = None
+
 
 
 class CountrydleEndStateResponse(BaseModel):

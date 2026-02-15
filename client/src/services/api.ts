@@ -1,123 +1,61 @@
 import axios from 'axios';
-import config from '../config.json';
-import { User } from '../stores/auth';
+import type { CountryDisplay, GameResponse, Question, Guess } from '../types';
 
-console.log(config.version);
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export interface MyState {
-  id: number;
-  day: {
-    date: string;
-    country: {name: string; official_name: string} | null;
-  },
-  points: number;
-  guesses_made: number;
-  questions_asked: number;
-  won: boolean;
-}
-
-export interface ProfileState {
-  user: {
-      username: string;
-      created_at: string | null;
-  },
-  points: number;
-  streak: number;
-  wins: number;
-  questions_asked: number;
-  questions_correct: number;
-  questions_incorrect: number;
-  guesses_made: number;
-  guesses_correct: number;
-  guesses_incorrect: number;
-  history: Array<MyState>;
-}
-
-const apiClient = axios.create({
-  baseURL: config.apiUrl,
-  withCredentials: true,   // Include credentials for cross-origin requests
-  headers: {
-    "Content-Type": "application/json", // Form-encoded data for auth
-  },
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true, // Important for cookies
 });
 
-const authClient = axios.create({
-  baseURL: config.apiUrl,
-  headers: {
-    "Content-Type": "application/x-www-form-urlencoded", // Form-encoded data for auth
+export const authService = {
+  login: async (formData: FormData) => {
+    const response = await api.post('/login', formData);
+    return response.data;
   },
-});
-
-apiClient.interceptors.response.use(
-  response => response,
-  error => {
-    console.error('API error:', error.response || error.message);
-    if(error.status >= 500) return Promise.reject(error);
-
-    return error.response
-  }
-);
-// API service for the game
-export const apiService = {
-  async login(credentials: { username: string; password: string }) {
-    const formData = new URLSearchParams();
-    formData.append('username', credentials.username);
-    formData.append('password', credentials.password);
-
-    return await authClient.post("/login", formData);
+  logout: async () => {
+    const response = await api.post('/logout');
+    return response.data;
   },
-  async logout(): Promise<{success: boolean}>{
-    return await apiClient.post(`${config.apiUrl}/logout`, {},
-    {
-    withCredentials: true
-    });
+  register: async (userData: any) => {
+    const response = await api.post('/register', userData);
+    return response.data;
   },
-  async getUser() {
-    const response = await axios.get(`${config.apiUrl}/users/me`, {
-    withCredentials: true
-    });
-    return response
+  verifyEmail: async (token: string) => {
+    const response = await api.get(`/verify-email?token=${token}`);
+    return response.data;
   },
-  googleSignIn(credential: string) {
-    return apiClient.post("/google-signin", { credential: credential });
-  },
-  register(credentials: {username: string; email: string; password: string}) {
-    return apiClient.post('/register', credentials);
-  },
-  getGameState() {
-    return apiClient.get('/countrydle/state');
-  },
-
-  askQuestion(question: string) {
-    return apiClient.post('/countrydle/question', { question });
-  },
-
-  makeGuess(guess: string, country_id?: number) {
-    return apiClient.post('/countrydle/guess', { guess, country_id });  // Submit a guess
-  },
-  getCountries() {
-    return apiClient.get('/countrydle/countries');
-  },
-
-  endGame() {
-    return apiClient.get('/countrydle/end/state');  // End the game and get the final result (country and explanations)
-  },
-  getCountrydleHistory() {
-    return apiClient.get('/countrydle/statistics/history');  // End the game and get the final result (country and explanations)
-  },
-  async getMyHistory(): Promise<{data: Array<MyState>}> {
-    return apiClient.get('/countrydle/statistics/history/me');  // End the game and get the final result (country and explanations)
-  },
-  updateUser(user: User) {
-    return apiClient.post('/users/update', user);  // End the game and get the final result (country and explanations)
-  },
-  changePassword(password: string) {
-    return apiClient.post('/users/change/password', { password });  // End the game and get the final result (country and explanations)
-  },
-  getLeaderboard() {
-    return apiClient.get('/countrydle/statistics/leaderboard');
-  },
-  getUserProfile(username: string) {
-    return apiClient.get(`/countrydle/statistics/users/${username}`);
+  googleLogin: async (credential: string) => {
+    const response = await api.post('/google-signin', { credential });
+    return response.data;
   }
 };
+
+export const gameService = {
+  getLeaderboard: async (): Promise<any[]> => {
+    const response = await api.get('/countrydle/statistics/leaderboard');
+    return response.data;
+  },
+  getUserStats: async (username: string): Promise<any> => {
+    const response = await api.get(`/countrydle/statistics/users/${username}`);
+    return response.data;
+  },
+  getState: async (): Promise<GameResponse> => {
+    const response = await api.get('/countrydle/state');
+    return response.data;
+  },
+  getCountries: async (): Promise<CountryDisplay[]> => {
+    const response = await api.get('/countrydle/countries');
+    return response.data;
+  },
+  askQuestion: async (question: string): Promise<Question> => {
+    const response = await api.post('/countrydle/question', { question });
+    return response.data;
+  },
+  makeGuess: async (guess: string, country_id?: number): Promise<Guess> => {
+    const response = await api.post('/countrydle/guess', { guess, country_id });
+    return response.data;
+  },
+};
+
+export default api;

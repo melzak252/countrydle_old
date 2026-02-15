@@ -1,0 +1,16 @@
+{
+  "files": [],
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+  },
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "src/**/*.d.ts"
+  ]
+}

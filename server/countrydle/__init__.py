@@ -52,43 +52,6 @@ def db_state_to_game_state(db_state) -> GameState:
     )
 
 
-@router.get("/state", response_model=CountrydleStateResponse)
-async def get_state(
-    user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db),
-):
-    day_country = await CountrydleRepository(session).get_today_country()
-    state = await CountrydleStateRepository(session).get_state(user, day_country)
-    guesses = await GuessRepository(session).get_user_day_guesses(user, day_country)
-    questions = await QuestionsRepository(session).get_user_day_questions(
-        user, day_country
-    )
-
-    if state is None:
-        return await CountrydleStateRepository(session).add_countrydle_state(
-            user, day_country
-        )
-
-    questions = [
-        (
-            QuestionDisplay.model_validate(question)
-            if question.valid
-            else InvalidQuestionDisplay.model_validate(question)
-        )
-        for question in questions
-    ]
-
-    response_state = CountrydleStateSchema.model_validate(state)
-
-    return CountrydleStateResponse(
-        user=user,
-        date=str(day_country.date),
-        state=response_state,
-        guesses=guesses,
-        questions=questions,
-    )
-
-
 @router.get("/end/state", response_model=CountrydleEndStateResponse)
 async def get_end_state(
     user: User = Depends(get_current_user),
@@ -115,6 +78,56 @@ async def get_end_state(
         state=CountrydleEndStateSchema.model_validate(state),
         guesses=guesses,
         questions=questions,
+    )
+
+
+@router.get("/state", response_model=Union[CountrydleStateResponse, CountrydleEndStateResponse])
+async def get_state(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    day_country = await CountrydleRepository(session).get_today_country()
+    state = await CountrydleStateRepository(session).get_state(user, day_country)
+
+    if state and state.is_game_over:
+        return await get_end_state(user, session)
+
+    guesses = await GuessRepository(session).get_user_day_guesses(user, day_country)
+    questions = await QuestionsRepository(session).get_user_day_questions(
+        user, day_country
+    )
+
+    if state is None:
+        new_state = await CountrydleStateRepository(session).add_countrydle_state(
+            user, day_country
+        )
+        return CountrydleStateResponse(
+            user=user,
+            date=str(day_country.date),
+            state=CountrydleStateSchema.model_validate(new_state),
+            guesses=[],
+            questions=[],
+            country=None
+        )
+
+    questions = [
+        (
+            QuestionDisplay.model_validate(question)
+            if question.valid
+            else InvalidQuestionDisplay.model_validate(question)
+        )
+        for question in questions
+    ]
+
+    response_state = CountrydleStateSchema.model_validate(state)
+
+    return CountrydleStateResponse(
+        user=user,
+        date=str(day_country.date),
+        state=response_state,
+        guesses=guesses,
+        questions=questions,
+        country=None,
     )
 
 
@@ -239,13 +252,6 @@ async def make_guess(
     new_guess = await GuessRepository(session).add_guess(guess_create)
 
     # Update State using Repository logic (handles points, game over, etc.)
-    # Note: guess_made expects a Guess model instance, which add_guess returns.
-    # However, guess_made modifies state based on remaining_guesses logic.
-    # We should ensure our GameRules logic matches what guess_made does, 
-    # or rely on guess_made entirely for state updates.
-    # The original code seemed to rely on manual updates. 
-    # Let's use guess_made as it encapsulates the business logic for scoring/winning.
-    
     await CountrydleStateRepository(session).guess_made(state, new_guess)
 
     return GuessDisplay.model_validate(new_guess)
