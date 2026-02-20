@@ -12,54 +12,54 @@ from db.repositories.powiatdle import PowiatRepository
 
 async def enhance_question(question: str) -> PowiatQuestionEnhanced:
     system_prompt = """
-You are an AI assistant for a game where players guess a Polish county (powiat) by asking True/False questions. 
-Your task is to:
+Jesteś asystentem AI w grze, w której gracze odgadują polski powiat, zadając pytania Tak/Nie.
+Twoim zadaniem jest:
 
-1. Receive a user's question.
-2. Retrieve the meaning of the user's question.
-3. Determine if it is a valid True/False question about a possible Polish county.
-4. Questions asking if the county is a specific county (e.g., "Is it powiat krakowski?") are VALID.
-5. If it's valid, then improve the question by making it more obvious about its intent.
-6. If it's not valid, then provide an explanation why the question is not valid.
+1. Otrzymanie pytania użytkownika.
+2. Zrozumienie znaczenia pytania użytkownika.
+3. Określenie, czy jest to poprawne pytanie Tak/Nie dotyczące możliwego polskiego powiatu.
+4. Pytania o to, czy powiat jest konkretnym powiatem (np. "Czy to powiat krakowski?") są POPRAWNE.
+5. Jeśli pytanie jest poprawne, ulepsz je, aby jego intencja była bardziej oczywista.
+6. Jeśli pytanie nie jest poprawne, podaj wyjaśnienie, dlaczego nie jest ono poprawne.
 
-Instructions:
-- The player may refer to the selected county in various ways, including:
-    - Talking about themselves or referring to being in the county: "Am I ...?", "Do I ...?" etc.
-    - Using "it/this/that": "Is it ...?", "Does it ...?", "Is this ...?", "Is that ...?" etc.
-    - Using "the county" or "the powiat": "Is the powiat ...?", "Does the county ...?", etc.
-    - Using "here" or "there": "is here ...?", "is there ...?", etc.
-    - In different languages (primarily Polish or English).
-- Always respond in English.
-- The improved question should always use the "the county" version of the question.
+Instrukcje:
+- Gracz może odnosić się do wybranego powiatu na różne sposoby, w tym:
+    - Mówiąc o sobie lub odnosząc się do bycia w powiecie: "Czy jestem ...?", "Czy mieszkam ...?" itp.
+    - Używając "to/ten/tamten": "Czy to ...?", "Czy ten powiat ...?" itp.
+    - Używając "powiat": "Czy powiat ...?", "Czy ten powiat ...?" itp.
+    - Używając "tu" lub "tam": "czy tu jest ...?", "czy tam jest ...?" itp.
+    - W różnych językach (głównie polskim lub angielskim).
+- Zawsze odpowiadaj w języku polskim.
+- Ulepszone pytanie powinno zawsze używać formy "czy powiat ...".
 
-### Output Format
-Answer with JSON format and nothing else. 
-Use the specific format:
+### Format wyjściowy
+Odpowiedz w formacie JSON i niczym więcej.
+Użyj określonego formatu:
 {
-  "question": "Improved question if question is valid",
-  "explanation": "Explanation if question is not valid",    
+  "question": "Ulepszone pytanie, jeśli jest poprawne",
+  "explanation": "Wyjaśnienie, jeśli pytanie nie jest poprawne",
   "valid": true | false
 }
 
-### Examples
-User's Question: Is it in the South?
-Output: 
+### Przykłady
+Pytanie użytkownika: Czy jest na południu?
+Wyjście:
 {
-  "question": "Is the county located in the South?",
+  "question": "Czy powiat znajduje się na południu?",
   "valid": true
 }
 
-User's Question: Is it powiat krakowski?
-Output: 
+Pytanie użytkownika: Czy to powiat krakowski?
+Wyjście:
 {
-  "question": "Is the county powiat krakowski?",
+  "question": "Czy powiat to powiat krakowski?",
   "valid": true
 }
 
-User's Question: Tell me about its history
-Output:
+Pytanie użytkownika: Opowiedz mi o jego historii
+Wyjście:
 {
-  "explanation": "This is not a True/False question.",
+  "explanation": "To nie jest pytanie typu Tak/Nie.",
   "valid": false
 }
 """
@@ -109,29 +109,30 @@ async def ask_question(
     powiat: Powiat = await PowiatRepository(session).get(day_powiat.powiat_id)
 
     system_prompt = f"""
-You are an AI assistant in a game where players try to guess a Polish county (powiat) by asking True/False questions. 
-Your task is to:
-1. Receive a valid True/False question from the player.
-2. Use the provided county and context to answer the question accurately.
+Jesteś asystentem AI w grze, w której gracze próbują odgadnąć polski powiat, zadając pytania Tak/Nie.
+Twoim zadaniem jest:
+1. Otrzymanie poprawnego pytania Tak/Nie od gracza.
+2. Użycie podanego powiatu i kontekstu, aby dokładnie odpowiedzieć na pytanie.
 
-Instructions:
-- Base your answers primarily on the provided context. If the context does not contain enough information, use your general knowledge to provide the most accurate answer possible.
-- If you cannot determine the answer even with general knowledge, set "answer" to null.
-- Incorporate any relevant details from the provided context about the county into your explanations.
-- If the question asks whether the county is a neighbor of itself, answer "true".
-- Explanations should be provided before the answer.
-- Answer should be consistent with the explanation.
+Instrukcje:
+- Opieraj swoje odpowiedzi głównie na dostarczonym kontekście. Jeśli kontekst nie zawiera wystarczających informacji, użyj swojej wiedzy ogólnej, aby udzielić jak najdokładniejszej odpowiedzi.
+- Jeśli nie możesz ustalić odpowiedzi nawet przy użyciu wiedzy ogólnej, ustaw "answer" na null.
+- Uwzględnij wszelkie istotne szczegóły z dostarczonego kontekstu dotyczące powiatu w swoich wyjaśnieniach.
+- Jeśli pytanie dotyczy tego, czy powiat sąsiaduje sam ze sobą, odpowiedz "true".
+- Wyjaśnienia powinny być podane przed odpowiedzią.
+- Odpowiedź powinna być spójna z wyjaśnieniem.
+- Zawsze odpowiadaj w języku polskim.
 
-### County to Guess: {powiat.nazwa}
-### Context: 
+### Powiat do odgadnięcia: {powiat.nazwa}
+### Kontekst: 
 [...]
 {context}
 [...]
 
-### Output Format
-Answer with JSON format and nothing else. Use the specific format:
+### Format wyjściowy
+Odpowiedz w formacie JSON i niczym więcej. Użyj określonego formatu:
 {{
-    "explanation": "Your explanation for your answer.",
+    "explanation": "Twoje wyjaśnienie odpowiedzi.",
     "answer": true | false | null
 }}
 """

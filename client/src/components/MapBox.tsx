@@ -184,7 +184,11 @@ export default function MapBox({ correctCountryName }: MapBoxProps) {
     });
 
     if (feature.properties) {
-        layer.bindTooltip(`${feature.properties.ADMIN}\n${feature.properties.SOVEREIGNT}`);
+        layer.bindTooltip(`
+          <b>${feature.properties.SOVEREIGNT}</b>
+          <br/>
+          ${feature.properties.ADMIN === feature.properties.SOVEREIGNT ? '' : `(${feature.properties.ADMIN})`}
+          `);
     }
   };
 

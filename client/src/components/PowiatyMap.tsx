@@ -130,7 +130,7 @@ export default function PowiatyMap({ correctPowiatName }: PowiatyMapProps) {
 
   const handleZoomToCorrect = () => {
     const { correctEntity } = usePowiatyGameStore.getState();
-    const targetName = correctPowiatName || correctEntity?.name;
+    const targetName = correctPowiatName || correctEntity?.nazwa;
     
     if (map && targetName && geoJsonData) {
       const correctFeature = geoJsonData.features.find((f: any) => 

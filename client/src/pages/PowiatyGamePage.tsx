@@ -94,7 +94,7 @@ export default function PowiatyGamePage() {
                     : `Skończyły Ci się próby.`}
                 </p>
                  {(correctPowiat || guesses.find(g => g.answer)?.guess) && (
-                    <p className="text-lg">Powiat to: <span className="font-bold">{correctPowiat?.name || guesses.find(g => g.answer)?.guess}</span></p>
+                    <p className="text-lg">Powiat to: <span className="font-bold">{correctPowiat?.nazwa || guesses.find(g => g.answer)?.guess}</span></p>
                  )}
               </div>
             )}
