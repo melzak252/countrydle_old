@@ -70,7 +70,7 @@ export default function PowiatyMap({ correctPowiatName }: PowiatyMapProps) {
       return getStyleFromState(
           feature, 
           selectedEntityNames, 
-          gameState?.is_game_over ? correctEntity?.name : undefined
+          gameState?.is_game_over ? correctEntity?.nazwa : undefined
       );
   }
 
@@ -83,11 +83,11 @@ export default function PowiatyMap({ correctPowiatName }: PowiatyMapProps) {
                  const newStyle = getStyleFromState(
                      feature, 
                      selectedPowiaty, 
-                     gameState?.is_game_over ? correctPowiatName || correctEntity?.name : undefined
+                     gameState?.is_game_over ? correctPowiatName || correctEntity?.nazwa : undefined
                  );
                  layer.setStyle(newStyle);
                  
-                 if (gameState?.is_game_over && (correctPowiatName || correctEntity?.name) && (feature.properties.nazwa.toUpperCase() === (correctPowiatName || correctEntity?.name).toUpperCase())) {
+                 if (gameState?.is_game_over && (correctPowiatName || correctEntity?.nazwa) && (feature.properties.nazwa.toUpperCase() === (correctPowiatName || correctEntity?.nazwa ).toUpperCase())) {
                      layer.bringToFront();
                  }
              }
@@ -117,7 +117,7 @@ export default function PowiatyMap({ correctPowiatName }: PowiatyMapProps) {
         const style = getStyleFromState(
             feature, 
             currentSelected, 
-            gameState?.is_game_over ? correctEntity?.name : undefined
+            gameState?.is_game_over ? correctEntity?.nazwa : undefined
         );
         l.setStyle(style);
       }
