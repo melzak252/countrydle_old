@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 
 export default function Header() {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -12,16 +12,31 @@ export default function Header() {
           Countrydle
         </Link>
 
-        <nav className="flex items-center gap-6">
-          <Link to="/game" className="hover:text-blue-400 transition-colors">Play</Link>
-          <Link to="/leaderboard" className="hover:text-blue-400 transition-colors">Leaderboard</Link>
+        <nav className="flex items-center gap-6 text-sm md:text-base">
+          <div className="relative group">
+            <button className="flex items-center gap-1 hover:text-blue-400 transition-colors py-2">
+              Games <ChevronDown size={16} />
+            </button>
+            <div className="absolute top-full left-0 w-48 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl py-2 hidden group-hover:block z-50">
+              <Link to="/game" className="block px-4 py-2 hover:bg-zinc-800 hover:text-blue-400 transition-colors">World Map</Link>
+              <Link to="/us-states" className="block px-4 py-2 hover:bg-zinc-800 hover:text-indigo-400 transition-colors">US States</Link>
+              <Link to="/powiaty" className="block px-4 py-2 hover:bg-zinc-800 hover:text-red-400 transition-colors">Powiaty</Link>
+              <Link to="/wojewodztwa" className="block px-4 py-2 hover:bg-zinc-800 hover:text-green-400 transition-colors">Województwa</Link>
+            </div>
+          </div>
+          
+          <Link to="/leaderboard" className="hidden sm:block hover:text-blue-400 transition-colors">Leaderboard</Link>
           
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+              <Link 
+                to={`/profile/${user?.username}`} 
+                className="flex items-center gap-2 hover:text-blue-400 transition-colors"
+                title="View Profile"
+              >
                 <UserIcon size={18} />
                 <span className="font-medium">{user?.username}</span>
-              </div>
+              </Link>
               <button 
                 onClick={() => logout()}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 transition-colors text-sm"

@@ -22,8 +22,12 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from countrydle import statistics
-from db.repositories.guess import GuessRepository
-from db.repositories.question import QuestionsRepository
+from db.repositories.guess import (
+    CountrydleGuessRepository,
+)
+from db.repositories.question import (
+    CountrydleQuestionsRepository,
+)
 from qdrant.utils import add_question_to_qdrant
 from db.repositories.country import CountryRepository
 from users.utils import get_current_user
@@ -48,7 +52,7 @@ def db_state_to_game_state(db_state) -> GameState:
         questions_used=COUNTRYDLE_CONFIG.max_questions - db_state.remaining_questions,
         guesses_used=COUNTRYDLE_CONFIG.max_guesses - db_state.remaining_guesses,
         is_won=db_state.won,
-        is_lost=db_state.is_game_over and not db_state.won
+        is_lost=db_state.is_game_over and not db_state.won,
     )
 
 
@@ -59,8 +63,10 @@ async def get_end_state(
 ):
     day_country = await CountrydleRepository(session).get_today_country()
     state = await CountrydleStateRepository(session).get_state(user, day_country)
-    guesses = await GuessRepository(session).get_user_day_guesses(user, day_country)
-    questions = await QuestionsRepository(session).get_user_day_questions(
+    guesses = await CountrydleGuessRepository(session).get_user_day_guesses(
+        user, day_country
+    )
+    questions = await CountrydleQuestionsRepository(session).get_user_day_questions(
         user, day_country
     )
 
@@ -81,7 +87,9 @@ async def get_end_state(
     )
 
 
-@router.get("/state", response_model=Union[CountrydleStateResponse, CountrydleEndStateResponse])
+@router.get(
+    "/state", response_model=Union[CountrydleStateResponse, CountrydleEndStateResponse]
+)
 async def get_state(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
@@ -92,8 +100,10 @@ async def get_state(
     if state and state.is_game_over:
         return await get_end_state(user, session)
 
-    guesses = await GuessRepository(session).get_user_day_guesses(user, day_country)
-    questions = await QuestionsRepository(session).get_user_day_questions(
+    guesses = await CountrydleGuessRepository(session).get_user_day_guesses(
+        user, day_country
+    )
+    questions = await CountrydleQuestionsRepository(session).get_user_day_questions(
         user, day_country
     )
 
@@ -107,7 +117,7 @@ async def get_state(
             state=CountrydleStateSchema.model_validate(new_state),
             guesses=[],
             questions=[],
-            country=None
+            country=None,
         )
 
     questions = [
@@ -146,7 +156,7 @@ async def ask_question(
 ):
     daily_country = await CountrydleRepository(session).get_today_country()
     if not daily_country:
-         daily_country = await CountrydleRepository(session).generate_new_day_country()
+        daily_country = await CountrydleRepository(session).generate_new_day_country()
 
     state = await CountrydleStateRepository(session).get_player_countrydle_state(
         user, daily_country
@@ -173,15 +183,19 @@ async def ask_question(
             explanation=enh_question.explanation,
             context=None,
         )
-        new_quest = await QuestionsRepository(session).create_question(question_create)
+        new_quest = await CountrydleQuestionsRepository(session).create_question(
+            question_create
+        )
 
         # Update Logic State
         try:
             new_game_state = game_rules.process_question(current_game_state)
         except ValueError as e:
-             raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e))
 
-        state.remaining_questions = COUNTRYDLE_CONFIG.max_questions - new_game_state.questions_used
+        state.remaining_questions = (
+            COUNTRYDLE_CONFIG.max_questions - new_game_state.questions_used
+        )
         state.questions_asked += 1
         state = await CountrydleStateRepository(session).update_countrydle_state(state)
 
@@ -194,17 +208,27 @@ async def ask_question(
         session=session,
     )
 
-    new_quest = await QuestionsRepository(session).create_question(question_create)
+    new_quest = await CountrydleQuestionsRepository(session).create_question(
+        question_create
+    )
 
-    await add_question_to_qdrant(new_quest, question_vector, daily_country.country_id)
+    await add_question_to_qdrant(
+        new_quest,
+        question_vector,
+        filter_key="country_id",
+        filter_value=daily_country.country_id,
+        collection_name="countries_questions",
+    )
 
     # Update Logic State
     try:
         new_game_state = game_rules.process_question(current_game_state)
     except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
-    state.remaining_questions = COUNTRYDLE_CONFIG.max_questions - new_game_state.questions_used
+    state.remaining_questions = (
+        COUNTRYDLE_CONFIG.max_questions - new_game_state.questions_used
+    )
     state.questions_asked += 1
     state = await CountrydleStateRepository(session).update_countrydle_state(state)
 
@@ -219,7 +243,7 @@ async def make_guess(
 ):
     daily_country = await CountrydleRepository(session).get_today_country()
     if not daily_country:
-         daily_country = await CountrydleRepository(session).generate_new_day_country()
+        daily_country = await CountrydleRepository(session).generate_new_day_country()
 
     state = await CountrydleStateRepository(session).get_player_countrydle_state(
         user, daily_country
@@ -236,20 +260,20 @@ async def make_guess(
 
     # Check if guess is correct
     is_correct = False
-    
+
     if guess.country_id is not None:
-        is_correct = (guess.country_id == daily_country.country_id)
-    
+        is_correct = guess.country_id == daily_country.country_id
+
     # Create Guess entry
     guess_create = GuessCreate(
         guess=guess.guess,
-        country_id=guess.country_id, 
+        country_id=guess.country_id,
         day_id=daily_country.id,
         user_id=user.id,
-        answer=is_correct
+        answer=is_correct,
     )
-    
-    new_guess = await GuessRepository(session).add_guess(guess_create)
+
+    new_guess = await CountrydleGuessRepository(session).add_guess(guess_create)
 
     # Update State using Repository logic (handles points, game over, etc.)
     await CountrydleStateRepository(session).guess_made(state, new_guess)

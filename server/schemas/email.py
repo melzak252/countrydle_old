@@ -1,5 +1,5 @@
 import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 
 class EmailCreate(BaseModel):
@@ -7,8 +7,8 @@ class EmailCreate(BaseModel):
     subject: str
     body: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
         
 class EmailModel(EmailCreate):
     id: int

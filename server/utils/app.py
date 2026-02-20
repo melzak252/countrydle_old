@@ -3,8 +3,8 @@ import logging
 from contextlib import asynccontextmanager
 
 import users.crud as ucrud
-from countrydle.crud import populate_countries
 from db import AsyncSessionLocal, get_engine
+
 from db.models import *  # noqa: F403
 from db.base import Base
 from fastapi import FastAPI
@@ -28,8 +28,8 @@ async def lifespan(app: FastAPI):
 
         async with AsyncSessionLocal() as session:
             await ucrud.add_base_permissions(session)
-            await populate_countries(session)
             await init_qdrant(session)
+
 
         await utils.generate_day_countries()
         await utils.check_streaks()

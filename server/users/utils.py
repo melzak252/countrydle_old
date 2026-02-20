@@ -77,6 +77,7 @@ async def get_current_user(
 
     try:
         email = verify_access_token(access_token)
+        print(f"DEBUG: Token verified. Email: {email}")
     except Exception as e:
         print(f"DEBUG: verify_access_token failed: {e}")
         raise

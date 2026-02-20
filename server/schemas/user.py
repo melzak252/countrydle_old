@@ -1,21 +1,20 @@
 from datetime import datetime
 from typing import List
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 
 class PermissionBase(BaseModel):
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PermissionDisplay(PermissionBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 
 class UserCreate(BaseModel):
@@ -41,8 +40,7 @@ class DevUser(BaseModel):
     email: EmailStr
     hashed_password: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserDisplay(BaseModel):
@@ -51,8 +49,7 @@ class UserDisplay(BaseModel):
     email: EmailStr
 
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProfileDisplay(BaseModel):
@@ -60,8 +57,8 @@ class ProfileDisplay(BaseModel):
     username: str
     created_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 
 class ChangePassword(BaseModel):

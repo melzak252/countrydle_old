@@ -17,12 +17,12 @@ from sqlalchemy.sql import func
 from db.base import Base
 
 
-class Question(Base):
-    __tablename__ = "questions"
+class CountrydleQuestion(Base):
+    __tablename__ = "countrydle_questions"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    day_id = Column(Integer, ForeignKey("day_countries.id"))
+    day_id = Column(Integer, ForeignKey("countrydle_days.id"))
     context = Column(String)
     original_question = Column(String, nullable=False)
     question = Column(String)
@@ -31,5 +31,5 @@ class Question(Base):
     explanation = Column(String, nullable=False)
     asked_at = Column(DateTime, default=func.now())
 
-    user = relationship("User", back_populates="questions")
-    day = relationship("DayCountry")
+    user = relationship("User", back_populates="countrydle_questions")
+    day = relationship("CountrydleDay")

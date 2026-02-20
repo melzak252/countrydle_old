@@ -35,15 +35,15 @@ async def test_login_user(async_client):
     assert data["username"] == "test_login_user"
 
 @pytest.mark.anyio
-async def test_get_me_protected(async_client, token):
-    response = await async_client.get("/users/me", cookies={"access_token": token})
+async def test_get_me_protected(auth_client):
+    response = await auth_client.get("/users/me")
     assert response.status_code == 200
     data = response.json()
     assert data["username"] == "pytest_user"
 
 @pytest.mark.anyio
-async def test_logout(async_client, token):
-    response = await async_client.post("/logout", cookies={"access_token": token})
+async def test_logout(auth_client):
+    response = await auth_client.post("/logout")
     assert response.status_code == 200
     assert response.json()["success"] is True
     # Verify cookie is cleared (value is empty string or "")

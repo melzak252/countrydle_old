@@ -3,8 +3,8 @@ from httpx import AsyncClient
 from unittest.mock import patch, AsyncMock
 
 @pytest.mark.anyio
-async def test_get_countries(async_client, token):
-    response = await async_client.get("/countrydle/countries", cookies={"access_token": token})
+async def test_get_countries(auth_client):
+    response = await auth_client.get("/countrydle/countries")
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -13,12 +13,42 @@ async def test_get_countries(async_client, token):
     assert "name" in data[0]
 
 @pytest.mark.anyio
-async def test_get_game_state(async_client, token):
-    response = await async_client.get("/countrydle/state", cookies={"access_token": token})
-    assert response.status_code == 200
-    data = response.json()
-    assert "state" in data
-    assert "remaining_guesses" in data["state"]
+async def test_get_game_state(auth_client):
+    from unittest.mock import MagicMock
+    with patch("db.repositories.countrydle.CountrydleRepository.get_today_country", new_callable=AsyncMock) as mock_get_today, \
+         patch("db.repositories.countrydle.CountrydleStateRepository.get_state", new_callable=AsyncMock) as mock_get_state, \
+         patch("db.repositories.guess.CountrydleGuessRepository.get_user_day_guesses", new_callable=AsyncMock) as mock_get_guesses, \
+         patch("db.repositories.question.CountrydleQuestionsRepository.get_user_day_questions", new_callable=AsyncMock) as mock_get_questions:
+        
+        # Mock Day
+        mock_day = MagicMock()
+        mock_day.id = 1
+        mock_day.country_id = 100
+        mock_day.date = "2023-01-01"
+        mock_get_today.return_value = mock_day
+        
+        # Mock State
+        mock_state = MagicMock()
+        mock_state.id = 1
+        mock_state.user_id = 1
+        mock_state.day_id = 1
+        mock_state.remaining_questions = 10
+        mock_state.remaining_guesses = 3
+        mock_state.questions_asked = 0
+        mock_state.guesses_made = 0
+        mock_state.is_game_over = False
+        mock_state.won = False
+        mock_state.points = 0
+        mock_get_state.return_value = mock_state
+        
+        mock_get_guesses.return_value = []
+        mock_get_questions.return_value = []
+
+        response = await auth_client.get("/countrydle/state")
+        assert response.status_code == 200
+        data = response.json()
+        assert "state" in data
+        assert "remaining_guesses" in data["state"]
 
 @pytest.mark.anyio
 async def test_make_guess_correct(async_client):
@@ -26,7 +56,7 @@ async def test_make_guess_correct(async_client):
     with patch("db.repositories.countrydle.CountrydleRepository.get_today_country", new_callable=AsyncMock) as mock_get_today, \
          patch("db.repositories.countrydle.CountrydleStateRepository.get_player_countrydle_state", new_callable=AsyncMock) as mock_get_state, \
          patch("db.repositories.country.CountryRepository.get", new_callable=AsyncMock) as mock_get_country, \
-         patch("db.repositories.guess.GuessRepository.add_guess", new_callable=AsyncMock) as mock_add_guess, \
+         patch("db.repositories.guess.CountrydleGuessRepository.add_guess", new_callable=AsyncMock) as mock_add_guess, \
          patch("db.repositories.countrydle.CountrydleStateRepository.guess_made", new_callable=AsyncMock) as mock_guess_made:
 
         # Setup mocks
@@ -61,17 +91,6 @@ async def test_make_guess_correct(async_client):
         mock_guess_result.guessed_at = "2023-01-01T12:00:00"
         mock_add_guess.return_value = mock_guess_result
 
-        # Mock Token (simulate logged in user)
-        token = "mock_token" 
-        # Note: In real test with async_client and dependency overrides, we might need more setup.
-        # But here we are mocking the repositories called by the endpoint.
-        # We still need a valid user in the request context.
-        # The endpoint uses `get_current_user`. We should override that dependency or mock it.
-        
-    # To make this work with async_client, we need to override the dependency `get_current_user` 
-    # or ensure the token works. Since we can't easily mock the token validation without DB,
-    # we should override `get_current_user` in `app.dependency_overrides`.
-    
     from app import app
     from users.utils import get_current_user
     from db.models import User
@@ -85,11 +104,6 @@ async def test_make_guess_correct(async_client):
     app.dependency_overrides[get_current_user] = mock_get_current_user
     
     try:
-        # Re-setup mocks inside the context where client is used (if needed)
-        # Actually, the patch context above is fine.
-        
-        # We need to re-apply patches because I closed the context above in my thought process.
-        # Let's rewrite the whole function properly.
         pass
     finally:
         app.dependency_overrides = {}
@@ -106,6 +120,8 @@ async def test_make_guess_correct_mocked(async_client):
         user = MagicMock(spec=User)
         user.id = 1
         user.username = "test_user"
+        user.email = "test@example.com"
+        user.verified = True
         return user
     
     app.dependency_overrides[get_current_user] = mock_get_current_user
@@ -114,7 +130,7 @@ async def test_make_guess_correct_mocked(async_client):
         with patch("db.repositories.countrydle.CountrydleRepository.get_today_country", new_callable=AsyncMock) as mock_get_today, \
              patch("db.repositories.countrydle.CountrydleStateRepository.get_player_countrydle_state", new_callable=AsyncMock) as mock_get_state, \
              patch("db.repositories.country.CountryRepository.get", new_callable=AsyncMock) as mock_get_country, \
-             patch("db.repositories.guess.GuessRepository.add_guess", new_callable=AsyncMock) as mock_add_guess, \
+             patch("db.repositories.guess.CountrydleGuessRepository.add_guess", new_callable=AsyncMock) as mock_add_guess, \
              patch("db.repositories.countrydle.CountrydleStateRepository.guess_made", new_callable=AsyncMock) as mock_guess_made:
 
             # Mock DayCountry
@@ -167,24 +183,11 @@ async def test_make_guess_correct_mocked(async_client):
         app.dependency_overrides = {}
 
 @pytest.mark.anyio
-async def test_ask_question(async_client):
-    # Create a fresh user for this test to ensure clean game state
-    import uuid
-    random_suffix = str(uuid.uuid4())[:8]
-    user_data = {
-        "username": f"ask_q_{random_suffix}",
-        "email": f"ask_q_{random_suffix}@example.com",
-        "password": "Password123!"
-    }
-    await async_client.post("/register", json=user_data)
-    
-    login_data = {
-        "username": user_data["username"],
-        "password": user_data["password"]
-    }
-    login_res = await async_client.post("/login", data=login_data)
-    token = login_res.cookies.get("access_token")
-
+async def test_ask_question_too_long(auth_client):
+    long_question = "a" * 51
+    question_data = {"question": long_question}
+    response = await auth_client.post("/countrydle/question", json=question_data)
+    assert response.status_code == 422 # Unprocessable Entity for validation error
     # Mocking the external dependencies for asking a question
     # We need to mock:
     # 1. gutils.enhance_question (LLM)
@@ -194,7 +197,7 @@ async def test_ask_question(async_client):
     with patch("countrydle.utils.enhance_question", new_callable=AsyncMock) as mock_enhance, \
          patch("countrydle.utils.ask_question", new_callable=AsyncMock) as mock_ask, \
          patch("countrydle.__init__.add_question_to_qdrant", new_callable=AsyncMock) as mock_add_qdrant, \
-         patch("db.repositories.question.QuestionsRepository.create_question", new_callable=AsyncMock) as mock_create_question:
+         patch("db.repositories.question.CountrydleQuestionsRepository.create_question", new_callable=AsyncMock) as mock_create_question:
         
         # Setup mocks
         mock_enhance.return_value.valid = True
@@ -218,8 +221,6 @@ async def test_ask_question(async_client):
         mock_ask.return_value = (mock_q_create, [0.1] * 1536)
         
         # Mock the create_question method return value
-        # We need an object that mimics the SQLAlchemy Question model, which has 'explanation'
-        # QuestionDisplay schema does NOT have explanation, so we can't use it directly if the code accesses .explanation
         from unittest.mock import MagicMock
         mock_question_db_obj = MagicMock()
         mock_question_db_obj.id = 123
@@ -235,7 +236,7 @@ async def test_ask_question(async_client):
         mock_create_question.return_value = mock_question_db_obj
         
         question_data = {"question": "Is it in Europe?"}
-        response = await async_client.post("/countrydle/question", json=question_data, cookies={"access_token": token})
+        response = await auth_client.post("/countrydle/question", json=question_data)
         
         assert response.status_code == 200
         data = response.json()

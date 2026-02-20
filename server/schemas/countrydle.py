@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing import List, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from schemas.user import ProfileDisplay, UserDisplay
 from schemas.country import CountryCount, CountryDisplay, DayCountryDisplay
-from db.models.countrydle import CountrydleState
 
 
 class QuestionBase(BaseModel):
-    question: str
+    question: str = Field(max_length=50)
+
 
 
 class QuestionEnhanced(BaseModel):
@@ -18,8 +18,7 @@ class QuestionEnhanced(BaseModel):
     valid: bool
     explanation: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuestionCreate(QuestionEnhanced):
@@ -28,8 +27,7 @@ class QuestionCreate(QuestionEnhanced):
     day_id: int
     context: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuestionDisplay(BaseModel):
@@ -42,15 +40,13 @@ class QuestionDisplay(BaseModel):
     day_id: int
     asked_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FullQuestionDisplay(QuestionDisplay):
     explanation: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InvalidQuestionDisplay(BaseModel):
@@ -64,15 +60,13 @@ class InvalidQuestionDisplay(BaseModel):
 
     explanation: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Guess Schema
 class GuessBase(BaseModel):
     guess: str
     country_id: int | None = None
-
 
 
 class GuessCreate(GuessBase):
@@ -86,8 +80,7 @@ class GuessDisplay(GuessBase):
     answer: bool | None
     guessed_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserHistory(BaseModel):
@@ -95,8 +88,7 @@ class UserHistory(BaseModel):
     questions: List[Union[QuestionDisplay, InvalidQuestionDisplay]]
     guesses: List[GuessDisplay]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FullUserHistory(BaseModel):
@@ -104,12 +96,10 @@ class FullUserHistory(BaseModel):
     questions: List[FullQuestionDisplay]
     guesses: List[GuessDisplay]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CountrydleStateSchema(BaseModel):
-
     remaining_questions: int
     remaining_guesses: int
     questions_asked: int
@@ -117,12 +107,10 @@ class CountrydleStateSchema(BaseModel):
     is_game_over: bool
     won: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CountrydleEndStateSchema(BaseModel):
-
     remaining_questions: int
     remaining_guesses: int
     questions_asked: int
@@ -131,8 +119,7 @@ class CountrydleEndStateSchema(BaseModel):
     won: bool
     points: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CountrydleStateResponse(BaseModel):
@@ -142,7 +129,6 @@ class CountrydleStateResponse(BaseModel):
     questions: List[QuestionDisplay | InvalidQuestionDisplay] = []
     guesses: List[GuessDisplay] = []
     country: CountryDisplay | None = None
-
 
 
 class CountrydleEndStateResponse(BaseModel):
@@ -158,8 +144,7 @@ class CountrydleHistory(BaseModel):
     countries_count: List[CountryCount]
     daily_countries: List[DayCountryDisplay]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LeaderboardEntry(BaseModel):
@@ -180,8 +165,7 @@ class UserState(BaseModel):
     points: int
     day: DayCountryDisplay
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserStatistics(BaseModel):
@@ -197,5 +181,4 @@ class UserStatistics(BaseModel):
     guesses_incorrect: int
     history: List[UserState]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

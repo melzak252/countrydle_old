@@ -13,11 +13,11 @@ export default function GamePage() {
     gameState, 
     questions, 
     guesses, 
-    countries, 
-    correctCountry,
+    entities: countries, 
+    correctEntity: correctCountry,
     isLoading, 
     fetchGameState, 
-    fetchCountries, 
+    fetchEntities: fetchCountries, 
     askQuestion, 
     makeGuess 
   } = useGameStore();
@@ -52,7 +52,7 @@ export default function GamePage() {
     <div className="max-w-6xl mx-auto pb-20 px-4">
       <div className="text-center mb-6">
         <h2 className="text-3xl font-bold mb-2">Guess the Country</h2>
-        <p className="text-zinc-400">Date: {useGameStore.getState().dailyCountryDate}</p>
+        <p className="text-zinc-400">Date: {useGameStore.getState().dailyDate}</p>
       </div>
 
       {/* Collapsible Map Section */}
@@ -100,6 +100,7 @@ export default function GamePage() {
                   onAsk={askQuestion} 
                   isLoading={isLoading} 
                   remainingQuestions={gameState.remaining_questions} 
+                  placeholder={`Ask a yes/no question about the country... (${gameState.remaining_questions} left)`}
                 />
                 
                 <GuessInput 
@@ -107,6 +108,7 @@ export default function GamePage() {
                   onGuess={async (id, name) => makeGuess(name, id)} 
                   isLoading={isLoading} 
                   remainingGuesses={gameState.remaining_guesses} 
+                  placeholder={`Guess the country... (${gameState.remaining_guesses} left)`}
                 />
               </div>
             )}

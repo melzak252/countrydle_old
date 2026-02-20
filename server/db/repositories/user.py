@@ -61,14 +61,15 @@ class UserRepository:
         return result.scalars().first()
 
     async def register_user(self, user: UserCreate) -> User:
-        if re.fullmatch("^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$", user.username):
+        if re.fullmatch(r"^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$", user.username):
             raise HTTPException(
                 status_code=400, detail="Username cannot be an email address!"
             )
 
         if not re.fullmatch(
-            "^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$", user.email
+            r"^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$", user.email
         ):
+
             raise HTTPException(
                 status_code=400, detail="Email is not valid email address!"
             )
@@ -169,16 +170,24 @@ class UserRepository:
             raise HTTPException(status_code=400, detail="Email already taken!")
 
         if not re.fullmatch(
-            "^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$", user_update.email
+            r"^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$", user_update.email
         ):
             raise HTTPException(
                 status_code=400, detail="Email is not valid email address!"
             )
 
-        if user.username != user_update.username and await self.get_user(
-            user_update.username
-        ):
-            raise HTTPException(status_code=400, detail="Username already taken!")
+        # Check if username is already taken by another user
+        if user_update.username:
+            result = await self.session.execute(
+                select(User).where(
+                    and_(
+                        User.username == user_update.username,
+                        User.id != user_id
+                    )
+                )
+            )
+            if result.scalars().first():
+                raise HTTPException(status_code=400, detail="Username already taken!")
 
         new_update = AccountUpdate(
             user_id=user_id, username=user.username or "New User", email=user.email

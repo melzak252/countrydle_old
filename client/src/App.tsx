@@ -8,6 +8,9 @@ import GamePage from './pages/GamePage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
 import SetupProfilePage from './pages/SetupProfilePage';
+import PowiatyGamePage from './pages/PowiatyGamePage';
+import USStatesGamePage from './pages/USStatesGamePage';
+import WojewodztwaGamePage from './pages/WojewodztwaGamePage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import CookiePolicyPage from './pages/CookiePolicyPage';
@@ -72,6 +75,9 @@ function App() {
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="profile/:username" element={<ProfilePage />} />
           <Route path="setup-profile" element={<SetupProfilePage />} />
+          <Route path="powiaty" element={<PowiatyGamePage />} />
+          <Route path="us-states" element={<USStatesGamePage />} />
+          <Route path="wojewodztwa" element={<WojewodztwaGamePage />} />
           <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="terms" element={<TermsOfServicePage />} />
           <Route path="cookie-policy" element={<CookiePolicyPage />} />

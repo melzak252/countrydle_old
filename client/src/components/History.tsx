@@ -1,5 +1,5 @@
 import type { Question } from '../types';
-import { Check, X, HelpCircle, AlertTriangle, Info } from 'lucide-react';
+import { Check, X, HelpCircle, Info, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { useGameStore } from '../stores/gameStore';
@@ -31,10 +31,21 @@ export default function History({ questions }: HistoryProps) {
               q.valid ? "bg-zinc-900 border-zinc-800" : "bg-red-900/20 border-red-900/50"
             )}
           >
-             <div className="flex-shrink-0">
+              <div className="flex-shrink-0 relative group/icon">
                 {!q.valid ? (
-                   <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500">
-                     <AlertTriangle size={18} />
+                   <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 cursor-help">
+                     <HelpCircle size={18} />
+                     <div className="hidden group-hover/icon:block absolute bottom-full left-1/2 -translate-x-1/2 mb-3 p-4 bg-zinc-900 border-2 border-amber-500/50 rounded-xl text-sm text-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.5),0_0_20px_rgba(245,158,11,0.2)] z-50 w-72 text-center animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-center gap-2 mb-2 text-amber-500 font-bold text-base">
+                           <AlertTriangle size={18} />
+                           <span>Invalid Question</span>
+                        </div>
+                        <p className="text-zinc-200 leading-relaxed mb-2">We couldn't answer this question because:</p>
+                        <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-200 italic">
+                          "{q.explanation}"
+                        </div>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-900 border-r-2 border-b-2 border-amber-500/50 transform rotate-45 -mt-[7px]"></div>
+                     </div>
                    </div>
                 ) : q.answer === true ? (
                   <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">

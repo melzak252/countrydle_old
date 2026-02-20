@@ -63,4 +63,62 @@ export const gameService = {
   },
 };
 
+export const powiatService = {
+  getState: async (): Promise<any> => {
+    const response = await api.get('/powiatdle/state');
+    return response.data;
+  },
+  getPowiaty: async (): Promise<any[]> => {
+    const response = await api.get('/powiatdle/powiaty');
+    return response.data;
+  },
+  askQuestion: async (question: string): Promise<any> => {
+    const response = await api.post('/powiatdle/question', { question });
+    return response.data;
+  },
+  makeGuess: async (guess: string, powiat_id?: number): Promise<any> => {
+    const response = await api.post('/powiatdle/guess', { guess, powiat_id });
+    return response.data;
+  },
+};
+
+export const usStateService = {
+  getState: async (): Promise<any> => {
+    const response = await api.get('/us_statedle/state');
+    return response.data;
+  },
+  getStates: async (): Promise<any[]> => {
+    const response = await api.get('/us_statedle/states');
+    return response.data;
+  },
+  askQuestion: async (question: string): Promise<any> => {
+    const response = await api.post('/us_statedle/question', { question });
+    return response.data;
+  },
+  makeGuess: async (guess: string, us_state_id?: number): Promise<any> => {
+    const response = await api.post('/us_statedle/guess', { guess, us_state_id });
+    return response.data;
+  },
+};
+
+export const wojewodztwoService = {
+  getState: async (): Promise<any> => {
+    const response = await api.get('/wojewodztwodle/state');
+    return response.data;
+  },
+  getWojewodztwa: async (): Promise<any[]> => {
+    const response = await api.get('/wojewodztwodle/wojewodztwa');
+    return response.data;
+  },
+  askQuestion: async (question: string): Promise<any> => {
+    const response = await api.post('/wojewodztwodle/question', { question });
+    return response.data;
+  },
+  makeGuess: async (guess: string, wojewodztwo_id?: number): Promise<any> => {
+    const response = await api.post('/wojewodztwodle/guess', { guess, wojewodztwo_id });
+    return response.data;
+  },
+};
+
 export default api;
+

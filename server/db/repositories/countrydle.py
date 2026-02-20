@@ -6,15 +6,15 @@ from sqlalchemy import Integer, and_, case, cast, func, select
 from sqlalchemy.orm import joinedload, aliased, contains_eager
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Country, CountrydleState, DayCountry, User
+from db.models import Country, CountrydleState, CountrydleDay, User
 from db.repositories.country import CountryRepository
-from db.models import Guess
+from db.models import CountrydleGuess
 from db.repositories.user import UserRepository
 from db.models.user import UserPoints
 from schemas.countrydle import LeaderboardEntry, UserStatistics
-from db.models.question import Question
-from db.repositories.question import QuestionsRepository
-from db.repositories.guess import GuessRepository
+from db.models.question import CountrydleQuestion
+from db.repositories.question import CountrydleQuestionsRepository
+from db.repositories.guess import CountrydleGuessRepository
 
 MAX_GUESSES = 3
 MAX_QUESTIONS = 10
@@ -25,39 +25,39 @@ class CountrydleRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    ### DayCountry
-    async def get_day_county(self, dcid: int) -> DayCountry | None:
+    ### CountrydleDay
+    async def get_day_county(self, dcid: int) -> CountrydleDay | None:
         result = await self.session.execute(
-            select(DayCountry).where(DayCountry.id == dcid)
+            select(CountrydleDay).where(CountrydleDay.id == dcid)
         )
 
         return result.scalars().first()
 
-    async def get_day_country_by_date(self, day_date: date) -> DayCountry | None:
+    async def get_day_country_by_date(self, day_date: date) -> CountrydleDay | None:
         result = await self.session.execute(
-            select(DayCountry).where(DayCountry.date == day_date)
+            select(CountrydleDay).where(CountrydleDay.date == day_date)
         )
 
         return result.scalars().first()
 
-    async def get_today_country(self) -> DayCountry | None:
+    async def get_today_country(self) -> CountrydleDay | None:
         result = await self.session.execute(
-            select(DayCountry)
-            .where(DayCountry.date == date.today())
-            .order_by(DayCountry.id.desc())
+            select(CountrydleDay)
+            .where(CountrydleDay.date == date.today())
+            .order_by(CountrydleDay.id.desc())
         )
 
         return result.scalars().first()
 
-    async def get_last_added_day_country(self) -> DayCountry | None:
+    async def get_last_added_day_country(self) -> CountrydleDay | None:
         result = await self.session.execute(
-            select(DayCountry).order_by(DayCountry.date.desc())
+            select(CountrydleDay).order_by(CountrydleDay.date.desc())
         )
 
         return result.scalars().first()
 
-    async def create_day_country(self, country: Country) -> DayCountry:
-        new_entry = DayCountry(country_id=country.id)
+    async def create_day_country(self, country: Country) -> CountrydleDay:
+        new_entry = CountrydleDay(country_id=country.id)
 
         self.session.add(new_entry)
 
@@ -72,8 +72,8 @@ class CountrydleRepository:
 
     async def create_day_country_with_date(
         self, country: Country, day_date: date
-    ) -> DayCountry:
-        new_entry = DayCountry(country_id=country.id, date=day_date)
+    ) -> CountrydleDay:
+        new_entry = CountrydleDay(country_id=country.id, date=day_date)
 
         self.session.add(new_entry)
 
@@ -88,7 +88,7 @@ class CountrydleRepository:
 
     async def generate_new_day_country(
         self, day_date: date | None = None
-    ) -> DayCountry:
+    ) -> CountrydleDay:
         countries = await CountryRepository(self.session).get_all_countries()
         if not countries:
             raise ValueError("No countries in database!")
@@ -104,16 +104,16 @@ class CountrydleRepository:
 
     async def get_countrydle_history(self):
         result = await self.session.execute(
-            select(DayCountry)
-            .options(joinedload(DayCountry.country))
-            .where(DayCountry.date < date.today())
-            .order_by(DayCountry.date.desc())
+            select(CountrydleDay)
+            .options(joinedload(CountrydleDay.country))
+            .where(CountrydleDay.date < date.today())
+            .order_by(CountrydleDay.date.desc())
         )
 
         return result.scalars().all()
 
     async def get_countries_count(self):
-        dc = aliased(DayCountry)
+        dc = aliased(CountrydleDay)
         stmt = (
             select(
                 Country.id,
@@ -193,13 +193,22 @@ class CountrydleRepository:
             ).where(CountrydleState.user_id == user.id)
         )
         wins = result.scalar() or 0
-        questions_asked, corr_quest, incorr_questions = await QuestionsRepository(
+        
+        q_stats = await CountrydleQuestionsRepository(
             self.session
         ).get_user_question_statistics(user)
+        
+        questions_asked = q_stats[0] if q_stats else 0
+        corr_quest = q_stats[1] if q_stats else 0
+        incorr_questions = q_stats[2] if q_stats else 0
 
-        guesses_made, guesses_correct, guesses_incorrect = await GuessRepository(
+        g_stats = await CountrydleGuessRepository(
             self.session
         ).get_user_guess_statistics(user)
+        
+        guesses_made = g_stats[0] if g_stats else 0
+        guesses_correct = g_stats[1] if g_stats else 0
+        guesses_incorrect = g_stats[2] if g_stats else 0
 
         history = await CountrydleStateRepository(
             self.session
@@ -207,19 +216,20 @@ class CountrydleRepository:
 
         profile = UserStatistics(
             user=user,
-            points=up.points,
-            streak=up.streak,
+            points=up.points if up else 0,
+            streak=up.streak if up else 0,
             wins=wins,
-            questions_asked=questions_asked,
-            questions_correct=corr_quest,
-            questions_incorrect=incorr_questions,
-            guesses_made=guesses_made,
-            guesses_correct=guesses_correct,
-            guesses_incorrect=guesses_incorrect,
+            questions_asked=questions_asked or 0,
+            questions_correct=corr_quest or 0,
+            questions_incorrect=incorr_questions or 0,
+            guesses_made=guesses_made or 0,
+            guesses_correct=guesses_correct or 0,
+            guesses_incorrect=guesses_incorrect or 0,
             history=history,
         )
 
         return profile
+
 
 
 class CountrydleStateRepository:
@@ -239,7 +249,7 @@ class CountrydleStateRepository:
 
         return question_points + guess_points
 
-    async def guess_made(self, state: CountrydleState, guess: Guess) -> CountrydleState:
+    async def guess_made(self, state: CountrydleState, guess: CountrydleGuess) -> CountrydleState:
         state.guesses_made += 1
         state.remaining_guesses -= 1
 
@@ -264,7 +274,7 @@ class CountrydleStateRepository:
         return state
 
     async def get_player_countrydle_state(
-        self, user: User, day: DayCountry
+        self, user: User, day: CountrydleDay
     ) -> CountrydleState:
         result = await self.session.execute(
             select(CountrydleState)
@@ -287,7 +297,7 @@ class CountrydleStateRepository:
             .options(
                 joinedload(CountrydleState.user),
                 joinedload(CountrydleState.day),
-                joinedload(CountrydleState.day, DayCountry.country),
+                joinedload(CountrydleState.day, CountrydleDay.country),
             )
             .where(
                 and_(
@@ -310,7 +320,7 @@ class CountrydleStateRepository:
     async def add_countrydle_state(
         self,
         user: User,
-        day: DayCountry,
+        day: CountrydleDay,
         max_questions: int = MAX_QUESTIONS,
         max_guesses: int = MAX_GUESSES,
     ) -> CountrydleState:
@@ -335,7 +345,7 @@ class CountrydleStateRepository:
 
         return new_entry
 
-    async def get_state(self, user: User, day: DayCountry) -> CountrydleState:
+    async def get_state(self, user: User, day: CountrydleDay) -> CountrydleState:
         result = await self.session.execute(
             select(CountrydleState)
             .where(CountrydleState.user_id == user.id, CountrydleState.day_id == day.id)

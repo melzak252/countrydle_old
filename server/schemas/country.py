@@ -1,6 +1,6 @@
 from datetime import date
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class CountryBase(BaseModel):
@@ -9,8 +9,7 @@ class CountryBase(BaseModel):
     wiki: str
     md_file: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CountryDisplay(BaseModel):
@@ -18,16 +17,14 @@ class CountryDisplay(BaseModel):
     name: str
     official_name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Country Schema
 class DayCountryBase(BaseModel):
     country_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DayCountryDisplay(DayCountryBase):
@@ -35,8 +32,7 @@ class DayCountryDisplay(DayCountryBase):
     country: CountryDisplay | None
     date: date
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CountryCount(BaseModel):
@@ -45,5 +41,5 @@ class CountryCount(BaseModel):
     count: int
     last: date | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+

@@ -17,15 +17,15 @@ from sqlalchemy.sql import func
 from db.base import Base
 
 
-class Guess(Base):
-    __tablename__ = "guesses"
+class CountrydleGuess(Base):
+    __tablename__ = "countrydle_guesses"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    day_id = Column(Integer, ForeignKey("day_countries.id"))
+    day_id = Column(Integer, ForeignKey("countrydle_days.id"))
     guess = Column(String, nullable=False)
     guessed_at = Column(DateTime, default=func.now())
     answer = Column(Boolean)
 
-    user = relationship("User", back_populates="guesses")
-    day = relationship("DayCountry")
+    user = relationship("User", back_populates="countrydle_guesses")
+    day = relationship("CountrydleDay")

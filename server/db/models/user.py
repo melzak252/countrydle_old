@@ -33,11 +33,11 @@ class User(Base):
 
     # Relationships
     points = relationship("UserPoints", uselist=False, back_populates="user")
-    questions = relationship("Question", back_populates="user")
+    countrydle_questions = relationship("CountrydleQuestion", back_populates="user")
     permissions = relationship(
         "Permission", secondary="user_permissions", viewonly=True
     )
-    guesses = relationship("Guess", back_populates="user")
+    countrydle_guesses = relationship("CountrydleGuess", back_populates="user")
 
     @property
     def permission_names(self):

@@ -3,7 +3,7 @@ import json
 from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Country, DayCountry, User
+from db.models import Country, CountrydleDay, User
 from qdrant.utils import get_fragments_matching_question
 from qdrant import COLLECTION_NAME
 from schemas.country import DayCountryDisplay
@@ -19,8 +19,9 @@ Your task is to:
 1. Receive a user's question.
 2. Retrieve the meaning of the user's question.
 3. Determine if it is a valid True/False question about possible country.
-4. If It's valid then improve the question by make it more obvious about its intent.
-5. If It's not valid then provide an explanation why the question is not valid.
+4. Questions asking if the country is a specific country (e.g., "Is it Poland?") are VALID.
+5. If It's valid then improve the question by make it more obvious about its intent.
+6. If It's not valid then provide an explanation why the question is not valid.
 
 Instructions:
 - The player may refer to the selected country in various ways, including:
@@ -116,13 +117,13 @@ User's Question: "asdfghjkl"
 
 async def ask_question(
     question: QuestionEnhanced,
-    day_country: DayCountry,
+    day_country: CountrydleDay,
     user: User,
     session: AsyncSession,
 ) -> QuestionCreate:
 
     fragments, question_vector = await get_fragments_matching_question(
-        question.question, day_country, COLLECTION_NAME, session
+        question.question, "country_id", day_country.country_id, "countries", session
     )
     context = "\n[ ... ]\n".join(fragment.text for fragment in fragments)
     country: Country = await CountryRepository(session).get(day_country.country_id)

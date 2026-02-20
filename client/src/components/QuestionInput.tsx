@@ -5,9 +5,10 @@ interface QuestionInputProps {
   onAsk: (question: string) => Promise<void>;
   isLoading: boolean;
   remainingQuestions: number;
+  placeholder?: string;
 }
 
-export default function QuestionInput({ onAsk, isLoading, remainingQuestions }: QuestionInputProps) {
+export default function QuestionInput({ onAsk, isLoading, remainingQuestions, placeholder }: QuestionInputProps) {
   const [question, setQuestion] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,6 +19,8 @@ export default function QuestionInput({ onAsk, isLoading, remainingQuestions }: 
     setQuestion('');
   };
 
+  const defaultPlaceholder = `Ask a yes/no question (e.g., "Is it in Europe?") - ${remainingQuestions} left`;
+
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto mb-8">
       <div className="relative">
@@ -25,7 +28,7 @@ export default function QuestionInput({ onAsk, isLoading, remainingQuestions }: 
           type="text"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder={`Ask a yes/no question (e.g., "Is it in Europe?") - ${remainingQuestions} left`}
+          placeholder={placeholder || defaultPlaceholder}
           className="w-full bg-zinc-800 border-2 border-zinc-700 rounded-xl px-6 py-4 pr-14 text-lg focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
           disabled={isLoading || remainingQuestions <= 0}
         />

@@ -10,7 +10,11 @@ from utils.google import verify_google_token
 import datetime
 from utils.app import lifespan
 from countrydle import router as countrydle_router
+from powiatdle import router as powiatdle_router
+from us_statedle import router as us_statedle_router
+from wojewodztwodle import router as wojewodztwodle_router
 from db import get_db
+
 from db.repositories.user import UserRepository
 from schemas.user import GoogleSignIn, UserCreate, UserDisplay
 from fastapi import (
@@ -55,6 +59,10 @@ app.mount("/static", StaticFiles(directory="templates"), name="static")
 
 app.include_router(users_router, prefix="/users", tags=["users"])
 app.include_router(countrydle_router, tags=["countrydle"])
+app.include_router(powiatdle_router, tags=["powiatdle"])
+app.include_router(us_statedle_router, tags=["us_statedle"])
+app.include_router(wojewodztwodle_router, tags=["wojewodztwodle"])
+
 
 
 @app.get("/")

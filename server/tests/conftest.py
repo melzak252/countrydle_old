@@ -34,3 +34,9 @@ async def token(async_client):
     response = await async_client.post("/login", data=login_data)
     assert response.status_code == 200
     return response.cookies.get("access_token")
+
+@pytest.fixture(scope="session")
+async def auth_client(async_client, token):
+    async_client.cookies.set("access_token", token)
+    yield async_client
+    async_client.cookies.delete("access_token")

@@ -7,24 +7,30 @@ interface GuessInputProps {
   onGuess: (countryId: number, name: string) => Promise<void>;
   isLoading: boolean;
   remainingGuesses: number;
+  placeholder?: string;
 }
 
-export default function GuessInput({ countries, onGuess, isLoading, remainingGuesses }: GuessInputProps) {
+export default function GuessInput({ countries, onGuess, isLoading, remainingGuesses, placeholder }: GuessInputProps) {
   const [query, setQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const filteredCountries = useMemo(() => {
-    if (!query) return [];
+    if (!query || !countries) return [];
     return countries
-      .filter(c => c.name.toLowerCase().includes(query.toLowerCase()))
+      .filter(c => {
+        const name = c.name || (c as any).nazwa;
+        return name?.toLowerCase().includes(query.toLowerCase());
+      })
       .slice(0, 5); // Limit to 5 suggestions
   }, [countries, query]);
 
-  const handleSelect = (country: CountryDisplay) => {
-    onGuess(country.id, country.name);
+  const handleSelect = (country: any) => {
+    onGuess(country.id, country.name || country.nazwa);
     setQuery('');
     setShowSuggestions(false);
   };
+
+  const defaultPlaceholder = `Guess the country... (${remainingGuesses} left)`;
 
   return (
     <div className="w-full max-w-2xl mx-auto mb-12 relative">
@@ -37,7 +43,7 @@ export default function GuessInput({ countries, onGuess, isLoading, remainingGue
             setShowSuggestions(true);
           }}
           onFocus={() => setShowSuggestions(true)}
-          placeholder={`Guess the country... (${remainingGuesses} left)`}
+          placeholder={placeholder || defaultPlaceholder}
           className="w-full bg-zinc-800 border-2 border-zinc-700 rounded-xl px-6 py-4 pl-12 text-lg focus:outline-none focus:border-green-500 transition-colors disabled:opacity-50"
           disabled={isLoading || remainingGuesses <= 0}
         />
@@ -52,7 +58,7 @@ export default function GuessInput({ countries, onGuess, isLoading, remainingGue
               onClick={() => handleSelect(country)}
               className="w-full text-left px-6 py-3 hover:bg-zinc-700 transition-colors border-b border-zinc-700 last:border-0"
             >
-              {country.name}
+              {country.name || (country as any).nazwa}
             </button>
           ))}
         </div>

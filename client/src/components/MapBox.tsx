@@ -93,7 +93,7 @@ function MapController({ correctCountryName, geoJsonData }: { correctCountryName
 export default function MapBox({ correctCountryName }: MapBoxProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [map, setMap] = useState<L.Map | null>(null);
-  const { selectedCountries, toggleCountrySelection, gameState } = useGameStore();
+  const { selectedEntityNames, toggleEntitySelection, gameState } = useGameStore();
   const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
   
   useEffect(() => {
@@ -103,17 +103,16 @@ export default function MapBox({ correctCountryName }: MapBoxProps) {
       .catch(err => console.error('Failed to load map data', err));
   }, []);
 
-  const getStyleFromState = (feature: any, currentSelectedCountries: string[], currentCorrectName?: string): PathOptions => {
+  const getStyleFromState = (feature: any, currentSelectedNames: string[], currentCorrectName?: string): PathOptions => {
     if (!feature || !feature.properties) return {};
 
     const countryName = feature.properties.SOVEREIGNT.toUpperCase();
     
     let isCorrect = false;
-    console.log('Computing style for', countryName, 'Selected:', currentSelectedCountries, 'Correct:', currentCorrectName);
     if (currentCorrectName) {
         isCorrect = countryName === currentCorrectName.toUpperCase();
     }
-    const isSelected = currentSelectedCountries.includes(countryName);
+    const isSelected = currentSelectedNames.includes(countryName);
 
     return {
       fillColor: isCorrect ? '#22cc22' : (isSelected ? '#cc2222' : '#242424'),
@@ -125,9 +124,8 @@ export default function MapBox({ correctCountryName }: MapBoxProps) {
   };
 
   const getStyle = (feature: any) => {
-      // This is called by React render cycle or when we manually invoke it with current state
-      const { selectedCountries, correctCountry } = useGameStore.getState();
-      return getStyleFromState(feature, selectedCountries, correctCountry?.name);
+      const { selectedEntityNames, correctEntity } = useGameStore.getState();
+      return getStyleFromState(feature, selectedEntityNames, correctEntity?.name);
   }
 
   // Optimization: Update styles imperatively instead of re-rendering whole map
@@ -136,11 +134,11 @@ export default function MapBox({ correctCountryName }: MapBoxProps) {
         geoJsonLayerRef.current.eachLayer((layer: any) => {
              const feature = layer.feature;
              if (feature) {
-                 const { gameState, correctCountry } = useGameStore.getState();
+                 const { gameState, correctEntity } = useGameStore.getState();
                  const newStyle = getStyleFromState(
                      feature, 
-                     selectedCountries, 
-                     gameState?.is_game_over ? correctCountryName || correctCountry?.name : undefined
+                     selectedEntityNames, 
+                     gameState?.is_game_over ? correctCountryName || correctEntity?.name : undefined
                  );
                  layer.setStyle(newStyle);
                  
@@ -152,7 +150,7 @@ export default function MapBox({ correctCountryName }: MapBoxProps) {
              }
         });
     }
-  }, [selectedCountries, gameState?.is_game_over, correctCountryName]);
+  }, [selectedEntityNames, gameState?.is_game_over, correctCountryName]);
 
   const onEachFeature = (feature: Feature, layer: L.Layer) => {
     const countryName = feature.properties?.SOVEREIGNT;
@@ -161,7 +159,7 @@ export default function MapBox({ correctCountryName }: MapBoxProps) {
     layer.on({
       click: () => {
         // Allow selection regardless of game state
-        toggleCountrySelection(countryName.toUpperCase());
+        toggleEntitySelection(countryName.toUpperCase());
       },
       mouseover: (e) => {
         const l = e.target;
@@ -174,19 +172,19 @@ export default function MapBox({ correctCountryName }: MapBoxProps) {
       mouseout: (e) => {
         const l = e.target;
         // Reset to computed style using direct store access
-        const { selectedCountries: currentSelected, correctCountry } = useGameStore.getState();
+        const { selectedEntityNames: currentSelected, correctEntity } = useGameStore.getState();
         
         const style = getStyleFromState(
             feature, 
             currentSelected, 
-            correctCountry?.name
+            correctEntity?.name
         );
         l.setStyle(style);
       }
     });
 
     if (feature.properties) {
-        layer.bindTooltip(`${feature.properties.ADMIN}`);
+        layer.bindTooltip(`${feature.properties.ADMIN}\n${feature.properties.SOVEREIGNT}`);
     }
   };
 
