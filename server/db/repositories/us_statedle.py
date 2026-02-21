@@ -135,13 +135,14 @@ class USStatedleStateRepository:
         history_result = await self.session.execute(history_stmt)
         history_states = history_result.scalars().all()
 
+        from datetime import date
         history_entries = [
             GameHistoryEntry(
                 date=str(state.day.date),
                 won=state.won,
                 points=state.points,
                 attempts=state.guesses_made,
-                target_name=state.day.us_state.name
+                target_name=state.day.us_state.name if state.day.date < date.today() else "???"
             )
             for state in history_states
         ]
