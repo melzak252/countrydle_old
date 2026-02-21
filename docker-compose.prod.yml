@@ -1,20 +1,22 @@
-version: '3.8'
+version: "3.8"
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  qdrant_snapshots:
+  backend_data:
 
 services:
   db:
     image: postgres:14
     container_name: database
     restart: always
-    build:
-      context: ./databases/postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Init scripts must remain bind mounts as they are part of the codebase
-      - ./backups:/backups
     ports:
       - "5432:5432"
 
@@ -25,10 +27,6 @@ services:
     ports:
       - 6351:6333
       - 6352:6334
-    expose:
-      - 6333
-      - 6334
-      - 6335
     volumes:
       - qdrant_snapshots:/qdrant/snapshots
       - qdrant_data:/qdrant/storage
@@ -40,7 +38,7 @@ services:
     image: ghcr.io/melzak252/countrydle-backend:latest
     restart: always
     ports:
-      - "8080:8080"
+      - "8082:8080"
     depends_on:
       - db
       - qdrant
@@ -69,12 +67,6 @@ services:
     image: ghcr.io/melzak252/countrydle-frontend:latest
     restart: always
     ports:
-      - "5173:80"
+      - "8083:5173"
     depends_on:
       - backend
-
-volumes:
-  postgres_data:
-  qdrant_data:
-  qdrant_snapshots:
-  backend_data:

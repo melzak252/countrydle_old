@@ -15,8 +15,5 @@ COPY . .
 
 # RUN alembic upgrade head
 
-# Expose port 8080 to the outside world
-EXPOSE 8080
-
 # Run the application when the container starts
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]

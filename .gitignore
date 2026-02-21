@@ -9,7 +9,7 @@ venv
 node_modules
 
 data/
-postgres_data/
+postgres_data*/
 qdrant_data/
 backups/
 
