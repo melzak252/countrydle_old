@@ -8,7 +8,7 @@ from schemas.country import CountryCount, CountryDisplay, DayCountryDisplay
 
 
 class QuestionBase(BaseModel):
-    question: str = Field(max_length=50)
+    question: str = Field(max_length=100)
 
 
 

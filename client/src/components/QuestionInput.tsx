@@ -29,6 +29,7 @@ export default function QuestionInput({ onAsk, isLoading, remainingQuestions, pl
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder={placeholder || defaultPlaceholder}
+          maxLength={100}
           className="w-full bg-zinc-800 border-2 border-zinc-700 rounded-xl px-6 py-4 pr-14 text-lg focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
           disabled={isLoading || remainingQuestions <= 0}
         />

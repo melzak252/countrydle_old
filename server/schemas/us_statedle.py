@@ -49,7 +49,7 @@ class USStateGuessDisplay(BaseModel):
 
 
 class USStateQuestionBase(BaseModel):
-    question: str = Field(max_length=50)
+    question: str = Field(max_length=100)
 
 
 

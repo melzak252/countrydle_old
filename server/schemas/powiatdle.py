@@ -48,7 +48,7 @@ class PowiatGuessDisplay(BaseModel):
 
 
 class PowiatQuestionBase(BaseModel):
-    question: str = Field(max_length=50)
+    question: str = Field(max_length=100)
 
 
 
