@@ -83,3 +83,4 @@ jobs:
             VITE_API_URL=${{ vars.VITE_API_URL }}
             VITE_RYBBIT_SCRIPT_URL=${{ vars.VITE_RYBBIT_SCRIPT_URL }}
             VITE_RYBBIT_SITE_ID=${{ vars.VITE_RYBBIT_SITE_ID }}
+            VITE_GOOGLE_ADSENSE_ID=${{ vars.VITE_GOOGLE_ADSENSE_ID }}
