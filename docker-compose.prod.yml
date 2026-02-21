@@ -1,20 +1,31 @@
 version: '3.8'
+
 services:
-  # nginx:
-  #   image: nginx:latest
-  #   container_name: nginx
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro  # Your NGINX configuration
-  #     - /etc/ssl/certs:/etc/ssl/certs:ro  # Mount the SSL certs directory
-  #   depends_on:
-  #     - frontend
-  #     - backend
+  db:
+    image: postgres:14
+    container_name: database
+    restart: always
+    build:
+      context: ./databases/postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Init scripts must remain bind mounts as they are part of the codebase
+      - ./databases/postgres/init.sql:/docker-entrypoint-initdb.d/a_init.sql
+      - ./databases/postgres/countries_dump.sql:/docker-entrypoint-initdb.d/countries_dump_countries.sql
+      - ./databases/postgres/countries_dump_docs.sql:/docker-entrypoint-initdb.d/countries_dump_docs.sql
+      - ./databases/postgres/countries_dump_frag.sql:/docker-entrypoint-initdb.d/countries_dump_frag.sql
+      - ./backups:/backups
+    ports:
+      - "5432:5432"
+
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant
+    restart: always
     ports:
       - 6351:6333
       - 6352:6334
@@ -23,31 +34,14 @@ services:
       - 6334
       - 6335
     volumes:
-      - ./databases/qdrant/snapshots:/qdrant/snapshots
-      - ./qdrant_data:/qdrant/storage
+      - qdrant_snapshots:/qdrant/snapshots
+      - qdrant_data:/qdrant/storage
     depends_on:
       - db
-  db:
-    image: postgres:14
-    container_name: database
-    build:
-      context: ./databases/postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-      - ./databases/postgres/init.sql:/docker-entrypoint-initdb.d/a_init.sql
-      - ./databases/postgres/countries_dump.sql:/docker-entrypoint-initdb.d/countries_dump_countries.sql
-      - ./databases/postgres/countries_dump_docs.sql:/docker-entrypoint-initdb.d/countries_dump_docs.sql
-      - ./databases/postgres/countries_dump_frag.sql:/docker-entrypoint-initdb.d/countries_dump_frag.sql
-      - ./backups:/backups
-    ports:
-      - "5432:5432"
+
   backend:
     container_name: server
-    build: ./server
+    image: ghcr.io/melzak252/countrydle-backend:latest
     restart: always
     ports:
       - "8080:8080"
@@ -71,15 +65,20 @@ services:
       - EMAIL_PASSWORD=${EMAIL_PASSWORD}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     volumes:
-      - ./data:/usr/src/app/data
-      - ./databases/qdrant/snapshots:/qdrant/snapshots
+      - backend_data:/usr/src/app/data
+      - qdrant_snapshots:/qdrant/snapshots
+
   frontend:
     container_name: client
-    build:
-      context: ./client
-      args:
-        VITE_API_URL: ${VITE_API_URL}
+    image: ghcr.io/melzak252/countrydle-frontend:latest
+    restart: always
     ports:
       - "5173:80"
+    depends_on:
+      - backend
 
-
+volumes:
+  postgres_data:
+  qdrant_data:
+  qdrant_snapshots:
+  backend_data:

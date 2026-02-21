@@ -16,9 +16,9 @@ services:
     image: postgres:14
     container_name: database
     environment:
-      POSTGRES_DB: guess_country
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./data:/var/lib/postgresql/data
     ports:
@@ -31,12 +31,12 @@ services:
     depends_on:
       - db
     environment:
-      - OPENAI_API_KEY=sk-...
-      - DATABASE_URL=postgresql+asyncpg://postgres:root@db:5432/guess_country
-      - QUIZ_MODEL=gpt-3.5-turbo
-      - SECRET_KEY=...
-      - ALGORITHM=HS256
-      - ACCESS_TOKEN_EXPIRE_MINUTES=30  
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - QUIZ_MODEL=${QUIZ_MODEL}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
   frontend:
     container_name: client
     build: ./client   # Specify the build context for the frontend (client)
