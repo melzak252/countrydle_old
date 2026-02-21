@@ -38,10 +38,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-      - ./databases/postgres/init.sql:/docker-entrypoint-initdb.d/a_init.sql
-      - ./databases/postgres/countries_dump.sql:/docker-entrypoint-initdb.d/countries_dump_countries.sql
-      - ./databases/postgres/countries_dump_docs.sql:/docker-entrypoint-initdb.d/countries_dump_docs.sql
-      - ./databases/postgres/countries_dump_frag.sql:/docker-entrypoint-initdb.d/countries_dump_frag.sql
       - ./backups:/backups
     ports:
       - "5432:5432"

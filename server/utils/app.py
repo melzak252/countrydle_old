@@ -14,9 +14,21 @@ import utils
 
 
 async def init_models(engine: AsyncEngine):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        logging.info("Database connection established and models created.")
+    import os
+    from alembic.config import Config
+    from alembic import command
+
+    alembic_cfg = Config("alembic.ini")
+    # We need to set the sqlalchemy.url in the config object because it might be different in env
+    db_url = os.getenv("DATABASE_URL").replace("+asyncpg", "")
+    alembic_cfg.set_main_option("sqlalchemy.url", db_url)
+    
+    try:
+        await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
+        logging.info("Database migrations applied successfully.")
+    except Exception as e:
+        logging.error(f"Error applying migrations: {e}")
+        raise e
 
 
 @asynccontextmanager
