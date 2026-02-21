@@ -6,6 +6,7 @@ import QuestionInput from '../components/QuestionInput';
 import History from '../components/History';
 import GuessInput from '../components/GuessInput';
 import USStatesMap from '../components/USStatesMap';
+import GameInstructions from '../components/GameInstructions';
 import { Loader2, ChevronDown, ChevronUp, Map as MapIcon } from 'lucide-react';
 
 export default function USStatesGamePage() {
@@ -74,6 +75,16 @@ export default function USStatesGamePage() {
           </div>
         )}
       </div>
+
+      <GameInstructions 
+        gameName="US States Game"
+        examples={[
+          "Is it on the East Coast?",
+          "Does it border the Pacific Ocean?",
+          "Was it one of the original 13 colonies?",
+          "Does it have a population over 10 million?"
+        ]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">

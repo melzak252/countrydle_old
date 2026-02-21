@@ -6,6 +6,7 @@ import QuestionInput from '../components/QuestionInput';
 import History from '../components/History';
 import GuessInput from '../components/GuessInput';
 import PowiatyMap from '../components/PowiatyMap';
+import GameInstructions from '../components/GameInstructions';
 import { Loader2, ChevronDown, ChevronUp, Map as MapIcon } from 'lucide-react';
 
 export default function PowiatyGamePage() {
@@ -79,6 +80,17 @@ export default function PowiatyGamePage() {
           </div>
         )}
       </div>
+
+      <GameInstructions 
+        gameName="Zgadnij Powiat"
+        isPolish={true}
+        examples={[
+          "Czy leży w województwie mazowieckim?",
+          "Czy graniczy z innym państwem?",
+          "Czy jest to miasto na prawach powiatu?",
+          "Czy liczba ludności przekracza 100 tysięcy?"
+        ]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Column: Inputs & History (8 cols) */}

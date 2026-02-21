@@ -6,6 +6,7 @@ import QuestionInput from '../components/QuestionInput';
 import History from '../components/History';
 import GuessInput from '../components/GuessInput';
 import MapBox from '../components/MapBox';
+import GameInstructions from '../components/GameInstructions';
 import { Loader2, ChevronDown, ChevronUp, Map as MapIcon } from 'lucide-react';
 
 export default function GamePage() {
@@ -74,6 +75,16 @@ export default function GamePage() {
           </div>
         )}
       </div>
+
+      <GameInstructions 
+        gameName="Countrydle"
+        examples={[
+          "Is it in Europe?",
+          "Does it have access to the sea?",
+          "Is the population greater than 50 million?",
+          "Is it a member of the G7?"
+        ]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Column: Inputs & History (8 cols) */}

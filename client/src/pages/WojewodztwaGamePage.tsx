@@ -6,6 +6,7 @@ import QuestionInput from '../components/QuestionInput';
 import History from '../components/History';
 import GuessInput from '../components/GuessInput';
 import WojewodztwaMap from '../components/WojewodztwaMap';
+import GameInstructions from '../components/GameInstructions';
 import { Loader2, ChevronDown, ChevronUp, Map as MapIcon } from 'lucide-react';
 
 export default function WojewodztwaGamePage() {
@@ -77,6 +78,17 @@ export default function WojewodztwaGamePage() {
           </div>
         )}
       </div>
+
+      <GameInstructions 
+        gameName="Zgadnij Województwo"
+        isPolish={true}
+        examples={[
+          "Czy leży w północnej Polsce?",
+          "Czy ma dostęp do morza?",
+          "Czy graniczy z Niemcami?",
+          "Czy siedzibą wojewody jest miasto na literę 'K'?"
+        ]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
