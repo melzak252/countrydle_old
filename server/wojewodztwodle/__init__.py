@@ -204,7 +204,7 @@ async def make_guess(
     state.is_game_over = new_game_state.is_game_over
     
     if state.won:
-        state.points = 100 # Simple points for now
+        state.points = await WojewodztwodleStateRepository(session).calc_points(state)
         
     await WojewodztwodleStateRepository(session).update_state(state)
 

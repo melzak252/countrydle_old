@@ -96,6 +96,13 @@ class PowiatdleStateRepository:
         await self.session.refresh(state)
         return state
 
+    async def calc_points(self, state: PowiatdleState) -> int:
+        # Powiaty are hard (380 options), so higher rewards
+        question_points = state.remaining_questions * 150
+        guess_points = 200 * (((state.remaining_guesses + 1) ** 2) + 1)
+        difficulty_bonus = 500
+        return question_points + guess_points + difficulty_bonus
+
     async def get_leaderboard(self) -> List[LeaderboardEntry]:
         stmt = (
             select(

@@ -79,6 +79,13 @@ class USStatedleStateRepository:
         await self.session.refresh(state)
         return state
 
+    async def calc_points(self, state: USStatedleState) -> int:
+        # US States are medium (50 options)
+        question_points = state.remaining_questions * 100
+        guess_points = 150 * (((state.remaining_guesses + 1) ** 2) + 1)
+        difficulty_bonus = 200
+        return question_points + guess_points + difficulty_bonus
+
     async def get_leaderboard(self) -> List[LeaderboardEntry]:
         stmt = (
             select(

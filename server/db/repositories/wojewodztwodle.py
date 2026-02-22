@@ -79,6 +79,12 @@ class WojewodztwodleStateRepository:
         await self.session.refresh(state)
         return state
 
+    async def calc_points(self, state: WojewodztwodleState) -> int:
+        # Wojewodztwa are easy (16 options), so lower rewards
+        question_points = state.remaining_questions * 50
+        guess_points = 100 * (state.remaining_guesses + 1)
+        return question_points + guess_points
+
     async def get_leaderboard(self) -> List[LeaderboardEntry]:
         stmt = (
             select(
