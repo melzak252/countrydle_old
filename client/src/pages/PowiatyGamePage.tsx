@@ -69,9 +69,13 @@ export default function PowiatyGamePage() {
           "Czy liczba ludności przekracza 100 tysięcy?"
         ]}
         scoring={{
-          maxPoints: 100,
+          maxPoints: 4750,
           details: [
-            "100 punktów za poprawne odgadnięcie powiatu"
+            "2000 pkt za odgadnięcie w 1. próbie",
+            "1000 pkt za odgadnięcie w 2. próbie",
+            "400 pkt za odgadnięcie w 3. próbie",
+            "150 pkt za każde niewykorzystane pytanie",
+            "500 pkt bonusu za trudność (powiaty)"
           ]
         }}
       />

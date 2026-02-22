@@ -65,9 +65,13 @@ export default function USStatesGamePage() {
           "Does it have a population over 10 million?"
         ]}
         scoring={{
-          maxPoints: 100,
+          maxPoints: 2500,
           details: [
-            "100 points for guessing the state correctly"
+            "1500 points for guessing on the 1st try",
+            "750 points for guessing on the 2nd try",
+            "300 points for guessing on the 3rd try",
+            "100 points for each unused question",
+            "200 points difficulty bonus"
           ]
         }}
       />

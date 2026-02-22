@@ -69,9 +69,11 @@ export default function WojewodztwaGamePage() {
           "Czy siedzibą wojewody jest miasto na literę 'K'?"
         ]}
         scoring={{
-          maxPoints: 100,
+          maxPoints: 450,
           details: [
-            "100 punktów za poprawne odgadnięcie województwa"
+            "200 pkt za odgadnięcie w 1. próbie",
+            "100 pkt za odgadnięcie w 2. próbie",
+            "50 pkt za każde niewykorzystane pytanie"
           ]
         }}
       />
