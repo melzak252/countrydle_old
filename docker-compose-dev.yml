@@ -28,7 +28,7 @@ services:
       - 6334
       - 6335
     volumes:
-      - ./databases/qdrant/snapshots:/qdrant/snapshots
+      - qdrant_snapshots:/qdrant/snapshots
       - ./qdrant_data:/qdrant/storage
     depends_on:
       - db
@@ -36,7 +36,7 @@ services:
   backend:
     container_name: server
     build: ./server
-    command: uvicorn app:app --host 0.0.0.0 --port 8080 --reload
+    command: uvicorn app:app --host 0.0.0.0 --port 8080
     ports:
       - "8080:8080"
     depends_on:
@@ -53,7 +53,6 @@ services:
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
       - QDRANT_HOST=${QDRANT_HOST}
       - QDRANT_PORT=${QDRANT_PORT}
-      - COLLECTION_NAME=${COLLECTION_NAME}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       - EMBEDDING_SIZE=${EMBEDDING_SIZE}
       - EMAIL_USERNAME=${EMAIL_USERNAME}
@@ -78,4 +77,5 @@ services:
     depends_on:
       - backend
 
-
+volumes:
+  qdrant_snapshots:

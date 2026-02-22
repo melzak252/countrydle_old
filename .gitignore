@@ -16,6 +16,6 @@ backups/
 docker-compose_dev.yml
 
 qdrant_data/
-qdrant_data_/
+qdrant_data_*/
 
 databases

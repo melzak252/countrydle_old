@@ -38,11 +38,12 @@ async def lifespan(app: FastAPI):
     engine = get_engine()
     try:
         await init_models(engine)
-        utils.scheduler.start()
 
         async with AsyncSessionLocal() as session:
             await ucrud.add_base_permissions(session)
             await init_qdrant(session)
+
+        utils.scheduler.start()
 
         yield
     except ConnectionRefusedError:

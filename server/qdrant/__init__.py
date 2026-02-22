@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import uuid
 from pathlib import Path
 from typing import List
 
@@ -13,7 +12,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.models import Distance, PointStruct, VectorParams, IntegerIndexParams
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from .utils import get_points, upsert_in_batches
 
@@ -41,41 +40,58 @@ client: QdrantClient = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
 
 async def sync_from_postgres(session: AsyncSession, collection_name: str):
-    """Syncs data from Postgres to Qdrant if collection is empty."""
-    try:
-        info = client.get_collection(collection_name)
-        if info.points_count > 0:
-            return
-    except Exception as e:
-        logging.error(f"Error checking collection {collection_name}: {e}")
+    """Syncs data from Postgres to Qdrant if counts differ."""
+    model = None
+    if collection_name == "countries": model = CountryFragment
+    elif collection_name == "powiaty": model = PowiatFragment
+    elif collection_name == "wojewodztwa": model = WojewodztwoFragment
+    elif collection_name == "us_states": model = USStateFragment
+    
+    if not model:
         return
 
-    logging.info(f"Collection {collection_name} is empty. Syncing from Postgres...")
+    try:
+        # Get Postgres count
+        res = await session.execute(select(func.count(model.id)))
+        pg_count = res.scalar() or 0
+
+        # Get Qdrant count
+        info = client.get_collection(collection_name)
+        qdrant_count = info.points_count or 0
+
+        if pg_count == qdrant_count:
+            logging.info(f"Collection {collection_name} is up to date ({pg_count} points).")
+            return
+            
+        logging.info(f"Collection {collection_name} count mismatch (PG: {pg_count}, Qdrant: {qdrant_count}). Syncing...")
+    except Exception as e:
+        logging.error(f"Error checking counts for {collection_name}: {e}")
+        return
     
     points = []
     if collection_name == "countries":
         res = await session.execute(select(CountryFragment))
         fragments = res.scalars().all()
         for f in fragments:
-            points.append(PointStruct(id=str(uuid.uuid4()), vector=f.embedding, payload={"country_id": f.country_id, "fragment_text": f.text}))
+            points.append(PointStruct(id=int(f.id), vector=list(f.embedding), payload={"country_id": f.country_id, "fragment_text": f.text}))
     elif collection_name == "powiaty":
         res = await session.execute(select(PowiatFragment))
         fragments = res.scalars().all()
         for f in fragments:
-            points.append(PointStruct(id=str(uuid.uuid4()), vector=f.embedding, payload={"powiat_id": f.powiat_id, "fragment_text": f.text}))
+            points.append(PointStruct(id=int(f.id), vector=list(f.embedding), payload={"powiat_id": f.powiat_id, "fragment_text": f.text}))
     elif collection_name == "wojewodztwa":
         res = await session.execute(select(WojewodztwoFragment))
         fragments = res.scalars().all()
         for f in fragments:
-            points.append(PointStruct(id=str(uuid.uuid4()), vector=f.embedding, payload={"wojewodztwo_id": f.wojewodztwo_id, "fragment_text": f.text}))
+            points.append(PointStruct(id=int(f.id), vector=list(f.embedding), payload={"wojewodztwo_id": f.wojewodztwo_id, "fragment_text": f.text}))
     elif collection_name == "us_states":
         res = await session.execute(select(USStateFragment))
         fragments = res.scalars().all()
         for f in fragments:
-            points.append(PointStruct(id=str(uuid.uuid4()), vector=f.embedding, payload={"us_state_id": f.us_state_id, "fragment_text": f.text}))
+            points.append(PointStruct(id=int(f.id), vector=list(f.embedding), payload={"us_state_id": f.us_state_id, "fragment_text": f.text}))
 
     if points:
-        upsert_in_batches(client, collection_name, points, batch_size=100)
+        upsert_in_batches(client, collection_name, points, batch_size=200)
         logging.info(f"Successfully synced {len(points)} points to {collection_name}")
 
 
