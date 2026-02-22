@@ -8,6 +8,7 @@ import GuessInput from '../components/GuessInput';
 import USStatesMap from '../components/USStatesMap';
 import GameInstructions from '../components/GameInstructions';
 import { Loader2, ChevronDown, ChevronUp, Map as MapIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function USStatesGamePage() {
   const { 
@@ -23,6 +24,7 @@ export default function USStatesGamePage() {
     makeGuess 
   } = useUSStatesGameStore();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isMapOpen, setIsMapOpen] = useState(true);
 
@@ -52,27 +54,16 @@ export default function USStatesGamePage() {
   return (
     <div className="max-w-6xl mx-auto pb-20 px-4">
       <div className="text-center mb-6">
-        <h2 className="text-3xl font-bold mb-2">Guess the US State</h2>
-        <p className="text-zinc-400">Date: {useUSStatesGameStore.getState().dailyDate}</p>
+        <h2 className="text-3xl font-bold mb-2">{t('usStatesPage.title')}</h2>
+        <p className="text-zinc-400">{t('gamePage.date', { date: useUSStatesGameStore.getState().dailyDate })}</p>
       </div>
 
       <GameInstructions 
         gameName="US States Game"
-        examples={[
-          "Is it on the East Coast?",
-          "Does it border the Pacific Ocean?",
-          "Was it one of the original 13 colonies?",
-          "Does it have a population over 10 million?"
-        ]}
+        examples={t('usStatesPage.examples', { returnObjects: true }) as string[]}
         scoring={{
           maxPoints: 2500,
-          details: [
-            "1500 points for guessing on the 1st try",
-            "750 points for guessing on the 2nd try",
-            "300 points for guessing on the 3rd try",
-            "100 points for each unused question",
-            "200 points difficulty bonus"
-          ]
+          details: t('usStatesPage.scoringDetails', { returnObjects: true }) as string[]
         }}
       />
 
@@ -84,7 +75,7 @@ export default function USStatesGamePage() {
         >
           <div className="flex items-center gap-2">
             <MapIcon size={20} className="text-blue-500" />
-            <span className="font-bold text-lg">US Map</span>
+            <span className="font-bold text-lg">{t('usStatesPage.map')}</span>
           </div>
           {isMapOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
@@ -101,15 +92,15 @@ export default function USStatesGamePage() {
             {gameState.is_game_over && (
               <div className={`text-center p-8 rounded-xl ${gameState.won ? 'bg-green-900/20 border border-green-500/50' : 'bg-red-900/20 border border-red-500/50'}`}>
                 <h2 className="text-4xl font-bold mb-4">
-                  {gameState.won ? 'You Won! 🎉' : 'Game Over 😔'}
+                  {gameState.won ? t('gamePage.won') : t('gamePage.gameOver')}
                 </h2>
                 <p className="text-xl mb-4">
                   {gameState.won 
-                    ? `You guessed the state correctly!` 
-                    : `You ran out of guesses.`}
+                    ? t('usStatesPage.wonMessage')
+                    : t('gamePage.lostMessage')}
                 </p>
                  {(correctState || guesses.find(g => g.answer)?.guess) && (
-                    <p className="text-lg">The state was: <span className="font-bold">{correctState?.name || guesses.find(g => g.answer)?.guess}</span></p>
+                    <p className="text-lg">{t('usStatesPage.answer')} <span className="font-bold">{correctState?.name || guesses.find(g => g.answer)?.guess}</span></p>
                  )}
               </div>
             )}
@@ -120,7 +111,7 @@ export default function USStatesGamePage() {
                   onAsk={askQuestion} 
                   isLoading={isLoading} 
                   remainingQuestions={gameState.remaining_questions} 
-                  placeholder={`Ask a yes/no question about the state... (${gameState.remaining_questions} left)`}
+                  placeholder={t('usStatesPage.askPlaceholder', { count: gameState.remaining_questions })}
                 />
                 
                 <GuessInput 
@@ -128,15 +119,15 @@ export default function USStatesGamePage() {
                   onGuess={async (id, name) => makeGuess(name, id)} 
                   isLoading={isLoading} 
                   remainingGuesses={gameState.remaining_guesses} 
-                  placeholder={`Guess the US state... (${gameState.remaining_guesses} left)`}
+                  placeholder={t('usStatesPage.guessPlaceholder', { count: gameState.remaining_guesses })}
                 />
               </div>
             )}
 
             <div>
                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold">Question History</h3>
-                  <span className="text-sm text-zinc-500">{questions.length} questions asked</span>
+                  <h3 className="text-xl font-bold">{t('gamePage.history')}</h3>
+                  <span className="text-sm text-zinc-500">{t('gamePage.questionsAsked', { count: questions.length })}</span>
                </div>
                <History questions={questions} isGameOver={gameState.is_game_over} />
             </div>
@@ -144,31 +135,31 @@ export default function USStatesGamePage() {
 
         <div className="lg:col-span-4 space-y-6">
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-               <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">Game Status</h3>
+               <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">{t('gamePage.status')}</h3>
                <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
                     <div className="text-2xl font-bold text-blue-500 mb-1">
                       {gameState.remaining_questions}
                     </div>
-                    <div className="text-xs text-zinc-500 uppercase">Questions Left</div>
+                    <div className="text-xs text-zinc-500 uppercase">{t('gamePage.questionsLeft')}</div>
                   </div>
                   <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
                     <div className="text-2xl font-bold text-teal-500 mb-1">
                       {gameState.remaining_guesses}
                     </div>
-                    <div className="text-xs text-zinc-500 uppercase">Guesses Left</div>
+                    <div className="text-xs text-zinc-500 uppercase">{t('gamePage.guessesLeft')}</div>
                   </div>
                </div>
             </div>
 
             {guesses.length > 0 && (
                 <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">Your Guesses</h3>
+                    <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">{t('gamePage.yourGuesses')}</h3>
                     <div className="space-y-2">
                         {guesses.map((g) => (
                             <div key={g.id} className={`flex items-center justify-between p-3 rounded-lg border ${g.answer ? 'bg-green-900/20 border-green-500/50 text-green-400' : 'bg-red-900/20 border-red-500/50 text-red-400'}`}>
                                 <span className="font-medium">{g.guess}</span>
-                                {g.answer ? <span className="text-green-500">Correct</span> : <span className="text-red-500">Incorrect</span>}
+                                {g.answer ? <span className="text-green-500">{t('gamePage.correct')}</span> : <span className="text-red-500">{t('gamePage.incorrect')}</span>}
                             </div>
                         ))}
                     </div>

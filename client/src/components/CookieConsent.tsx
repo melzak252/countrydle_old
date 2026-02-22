@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cookie, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Trans, useTranslation } from 'react-i18next';
 import { cn } from "../lib/utils";
 
 export default function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Check if user has already made a choice
@@ -46,24 +48,26 @@ export default function CookieConsent() {
               <div className="flex items-center gap-2">
                 <Cookie className="h-6 w-6 text-yellow-500" />
                 <h3 className="text-lg font-semibold text-white">
-                  We use cookies
+                  {t('cookie.title')}
                 </h3>
               </div>
               <button
                 onClick={handleDecline}
                 className="text-zinc-400 hover:text-white transition-colors"
-                aria-label="Close"
+                aria-label={t('cookie.close')}
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             
             <p className="text-sm text-zinc-400">
-              We use cookies to enhance your browsing experience, serve personalized content (including ads via Google AdSense), and analyze our traffic. By clicking "Accept All", you consent to our use of cookies. Read our{" "}
-              <Link to="/cookie-policy" className="text-blue-400 hover:underline">
-                Cookie Policy
-              </Link>{" "}
-              for more details.
+              <Trans
+                i18nKey="cookie.message"
+                values={{ policy: t('cookie.policy') }}
+                components={{
+                  policyLink: <Link to="/cookie-policy" className="text-blue-400 hover:underline" />,
+                }}
+              />
             </p>
             
             <div className="flex gap-3 mt-2">
@@ -71,13 +75,13 @@ export default function CookieConsent() {
                 onClick={handleDecline}
                 className="flex-1 px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors"
               >
-                Decline
+                {t('cookie.decline')}
               </button>
               <button
                 onClick={handleAccept}
                 className="flex-1 px-4 py-2 text-sm font-medium text-black bg-white hover:bg-zinc-200 rounded-md transition-colors"
               >
-                Accept All
+                {t('cookie.acceptAll')}
               </button>
             </div>
           </div>

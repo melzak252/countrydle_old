@@ -8,6 +8,7 @@ import GuessInput from '../components/GuessInput';
 import PowiatyMap from '../components/PowiatyMap';
 import GameInstructions from '../components/GameInstructions';
 import { Loader2, ChevronDown, ChevronUp, Map as MapIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function PowiatyGamePage() {
   const { 
@@ -24,6 +25,7 @@ export default function PowiatyGamePage() {
   } = usePowiatyGameStore();
 
   const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isMapOpen, setIsMapOpen] = useState(true);
 
@@ -54,29 +56,17 @@ export default function PowiatyGamePage() {
     <div className="max-w-6xl mx-auto pb-20 px-4">
       <div className="text-center mb-6">
         <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-red-500 to-white text-transparent bg-clip-text">
-          Zgadnij Powiat
+          {t('powiatyPage.title')}
         </h2>
-        <p className="text-zinc-400">Data: {usePowiatyGameStore.getState().dailyDate}</p>
+        <p className="text-zinc-400">{t('gamePage.date', { date: usePowiatyGameStore.getState().dailyDate })}</p>
       </div>
 
       <GameInstructions 
-        gameName="Zgadnij Powiat"
-        isPolish={true}
-        examples={[
-          "Czy leży w województwie mazowieckim?",
-          "Czy graniczy z innym państwem?",
-          "Czy jest to miasto na prawach powiatu?",
-          "Czy liczba ludności przekracza 100 tysięcy?"
-        ]}
+        gameName={t('powiatyPage.title')}
+        examples={t('powiatyPage.examples', { returnObjects: true }) as string[]}
         scoring={{
           maxPoints: 4750,
-          details: [
-            "2000 pkt za odgadnięcie w 1. próbie",
-            "1000 pkt za odgadnięcie w 2. próbie",
-            "400 pkt za odgadnięcie w 3. próbie",
-            "150 pkt za każde niewykorzystane pytanie",
-            "500 pkt bonusu za trudność (powiaty)"
-          ]
+          details: t('powiatyPage.scoringDetails', { returnObjects: true }) as string[]
         }}
       />
 
@@ -88,7 +78,7 @@ export default function PowiatyGamePage() {
         >
           <div className="flex items-center gap-2">
             <MapIcon size={20} className="text-red-500" />
-            <span className="font-bold text-lg">Mapa Polski (Powiaty)</span>
+            <span className="font-bold text-lg">{t('powiatyPage.map')}</span>
           </div>
           {isMapOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
@@ -108,15 +98,15 @@ export default function PowiatyGamePage() {
             {gameState.is_game_over && (
               <div className={`text-center p-8 rounded-xl ${gameState.won ? 'bg-green-900/20 border border-green-500/50' : 'bg-red-900/20 border border-red-500/50'}`}>
                 <h2 className="text-4xl font-bold mb-4">
-                  {gameState.won ? 'Wygrałeś! 🎉' : 'Koniec Gry 😔'}
+                  {gameState.won ? t('powiatyPage.won') : t('powiatyPage.gameOver')}
                 </h2>
                 <p className="text-xl mb-4">
                   {gameState.won 
-                    ? `Odgadłeś powiat poprawnie!` 
-                    : `Skończyły Ci się próby.`}
+                    ? t('powiatyPage.wonMessage')
+                    : t('powiatyPage.lostMessage')}
                 </p>
                  {(correctPowiat || guesses.find(g => g.answer)?.guess) && (
-                    <p className="text-lg">Powiat to: <span className="font-bold">{correctPowiat?.nazwa || guesses.find(g => g.answer)?.guess}</span></p>
+                    <p className="text-lg">{t('powiatyPage.answer')} <span className="font-bold">{correctPowiat?.nazwa || guesses.find(g => g.answer)?.guess}</span></p>
                  )}
               </div>
             )}
@@ -127,7 +117,7 @@ export default function PowiatyGamePage() {
                   onAsk={askQuestion} 
                   isLoading={isLoading} 
                   remainingQuestions={gameState.remaining_questions} 
-                  placeholder={`Zadaj pytanie o powiat... (zostało ${gameState.remaining_questions})`}
+                  placeholder={t('powiatyPage.askPlaceholder', { count: gameState.remaining_questions })}
                 />
                 
                 <GuessInput 
@@ -135,15 +125,15 @@ export default function PowiatyGamePage() {
                   onGuess={async (id, name) => makeGuess(name, id)} 
                   isLoading={isLoading} 
                   remainingGuesses={gameState.remaining_guesses} 
-                  placeholder={`Zgadnij powiat... (zostało ${gameState.remaining_guesses})`}
+                  placeholder={t('powiatyPage.guessPlaceholder', { count: gameState.remaining_guesses })}
                 />
               </div>
             )}
 
             <div>
                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold">Historia Pytań</h3>
-                  <span className="text-sm text-zinc-500">{questions.length} zadanych pytań</span>
+                  <h3 className="text-xl font-bold">{t('powiatyPage.history')}</h3>
+                  <span className="text-sm text-zinc-500">{t('powiatyPage.questionsAsked', { count: questions.length })}</span>
                </div>
                <History questions={questions} isGameOver={gameState.is_game_over} />
             </div>
@@ -152,31 +142,31 @@ export default function PowiatyGamePage() {
         {/* Side Column: Stats & Guesses (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-               <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">Status Gry</h3>
+               <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">{t('powiatyPage.status')}</h3>
                <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
                     <div className="text-2xl font-bold text-blue-500 mb-1">
                       {gameState.remaining_questions}
                     </div>
-                    <div className="text-xs text-zinc-500 uppercase">Pytania</div>
+                    <div className="text-xs text-zinc-500 uppercase">{t('powiatyPage.questionsLeft')}</div>
                   </div>
                   <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
                     <div className="text-2xl font-bold text-teal-500 mb-1">
                       {gameState.remaining_guesses}
                     </div>
-                    <div className="text-xs text-zinc-500 uppercase">Próby</div>
+                    <div className="text-xs text-zinc-500 uppercase">{t('powiatyPage.guessesLeft')}</div>
                   </div>
                </div>
             </div>
 
             {guesses.length > 0 && (
                 <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">Twoje Strzały</h3>
+                    <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">{t('powiatyPage.yourGuesses')}</h3>
                     <div className="space-y-2">
                         {guesses.map((g) => (
                             <div key={g.id} className={`flex items-center justify-between p-3 rounded-lg border ${g.answer ? 'bg-green-900/20 border-green-500/50 text-green-400' : 'bg-red-900/20 border-red-500/50 text-red-400'}`}>
                                 <span className="font-medium">{g.guess}</span>
-                                {g.answer ? <span className="text-green-500">Poprawnie</span> : <span className="text-red-500">Błędnie</span>}
+                                {g.answer ? <span className="text-green-500">{t('powiatyPage.correct')}</span> : <span className="text-red-500">{t('powiatyPage.incorrect')}</span>}
                             </div>
                         ))}
                     </div>
