@@ -147,11 +147,11 @@ export default function WojewodztwaMap({ correctWojewodztwoName }: WojewodztwaMa
   };
 
   if (!geoJsonData) {
-    return <div className="h-[500px] w-full bg-zinc-900 rounded-xl animate-pulse flex items-center justify-center text-zinc-500">Ładowanie mapy województw...</div>;
+    return <div className="h-[350px] md:h-[500px] w-full bg-zinc-900 rounded-xl animate-pulse flex items-center justify-center text-zinc-500">Ładowanie mapy województw...</div>;
   }
 
   return (
-    <div className="h-[600px] w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg relative z-0">
+    <div className="h-[400px] md:h-[600px] w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg relative z-0">
       <style>{`
         .leaflet-interactive:focus {
             outline: none;

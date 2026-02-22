@@ -22,7 +22,7 @@ export default function QuestionInput({ onAsk, isLoading, remainingQuestions, pl
   const defaultPlaceholder = `Ask a yes/no question (e.g., "Is it in Europe?") - ${remainingQuestions} left`;
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto mb-8">
+    <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto mb-4 md:mb-8">
       <div className="relative">
         <input
           type="text"
@@ -30,14 +30,15 @@ export default function QuestionInput({ onAsk, isLoading, remainingQuestions, pl
           onChange={(e) => setQuestion(e.target.value)}
           placeholder={placeholder || defaultPlaceholder}
           maxLength={100}
-          className="w-full bg-zinc-800 border-2 border-zinc-700 rounded-xl px-6 py-4 pr-14 text-lg focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+          className="w-full bg-zinc-800 border-2 border-zinc-700 rounded-xl px-4 py-3 md:px-6 md:py-4 pr-12 md:pr-14 text-base md:text-lg focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
           disabled={isLoading || remainingQuestions <= 0}
         />
         <button
           type="submit"
           disabled={!question.trim() || isLoading || remainingQuestions <= 0}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
+          className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 p-2 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
         >
+
           {isLoading ? (
             <Loader2 size={20} className="animate-spin" />
           ) : (

@@ -55,10 +55,10 @@ export default function WojewodztwaGamePage() {
   return (
     <div className="max-w-6xl mx-auto pb-20 px-4">
       <div className="text-center mb-6">
-        <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-red-500 to-white text-transparent bg-clip-text">
+        <h2 className="text-2xl md:text-4xl font-bold mb-1 md:mb-2 bg-gradient-to-r from-red-500 to-white text-transparent bg-clip-text">
           {t('wojewodztwaPage.title')}
         </h2>
-        <p className="text-zinc-400">{t('gamePage.date', { date: useWojewodztwaGameStore.getState().dailyDate })}</p>
+        <p className="text-xs md:text-sm text-zinc-400">{t('gamePage.date', { date: useWojewodztwaGameStore.getState().dailyDate })}</p>
       </div>
 
       <GameInstructions 
@@ -71,16 +71,16 @@ export default function WojewodztwaGamePage() {
       />
 
       {/* Collapsible Map Section */}
-      <div className="mb-8 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg">
+      <div className="mb-6 md:mb-8 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg">
         <button 
           onClick={() => setIsMapOpen(!isMapOpen)}
-          className="w-full p-4 flex items-center justify-between bg-zinc-800/50 hover:bg-zinc-800 transition-colors"
+          className="w-full p-3 md:p-4 flex items-center justify-between bg-zinc-800/50 hover:bg-zinc-800 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <MapIcon size={20} className="text-red-500" />
-            <span className="font-bold text-lg">{t('wojewodztwaPage.map')}</span>
+            <MapIcon className="text-red-500 w-[18px] h-[18px] md:w-[20px] md:h-[20px]" />
+            <span className="font-bold text-base md:text-lg">{t('wojewodztwaPage.map')}</span>
           </div>
-          {isMapOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          {isMapOpen ? <ChevronUp className="w-[18px] h-[18px] md:w-[20px] md:h-[20px]" /> : <ChevronDown className="w-[18px] h-[18px] md:w-[20px] md:h-[20px]" />}
         </button>
         
         {isMapOpen && (
@@ -90,23 +90,24 @@ export default function WojewodztwaGamePage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+        <div className="lg:col-span-8 space-y-6 md:space-y-8">
             {gameState.is_game_over && (
-              <div className={`text-center p-8 rounded-xl ${gameState.won ? 'bg-green-900/20 border border-green-500/50' : 'bg-red-900/20 border border-red-500/50'}`}>
-                <h2 className="text-4xl font-bold mb-4">
+              <div className={`text-center p-6 md:p-8 rounded-xl ${gameState.won ? 'bg-green-900/20 border border-green-500/50' : 'bg-red-900/20 border border-red-500/50'}`}>
+                <h2 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">
                   {gameState.won ? t('wojewodztwaPage.won') : t('wojewodztwaPage.gameOver')}
                 </h2>
-                <p className="text-xl mb-4">
+                <p className="text-lg md:text-xl mb-3 md:mb-4">
                   {gameState.won 
                     ? t('wojewodztwaPage.wonMessage')
                     : t('wojewodztwaPage.lostMessage')}
                 </p>
                  {(correctWojewodztwo || guesses.find(g => g.answer)?.guess) && (
-                    <p className="text-lg">{t('wojewodztwaPage.answer')} <span className="font-bold">{correctWojewodztwo?.nazwa || guesses.find(g => g.answer)?.guess}</span></p>
+                    <p className="text-base md:text-lg">{t('wojewodztwaPage.answer')} <span className="font-bold">{correctWojewodztwo?.nazwa || guesses.find(g => g.answer)?.guess}</span></p>
                  )}
               </div>
             )}
+
 
             {!gameState.is_game_over && (
               <div className="space-y-6">
@@ -136,39 +137,40 @@ export default function WojewodztwaGamePage() {
             </div>
         </div>
 
-        <div className="lg:col-span-4 space-y-6">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-               <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">{t('wojewodztwaPage.status')}</h3>
-               <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-500 mb-1">
+        <div className="lg:col-span-4 space-y-4 md:space-y-6">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6 shadow-md">
+               <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-[10px] md:text-sm">{t('wojewodztwaPage.status')}</h3>
+               <div className="grid grid-cols-2 gap-3 md:gap-4">
+                  <div className="text-center p-2 md:p-3 bg-zinc-800/50 rounded-lg">
+                    <div className="text-xl md:text-2xl font-bold text-blue-500 mb-0.5 md:mb-1">
                       {gameState.remaining_questions}
                     </div>
-                    <div className="text-xs text-zinc-500 uppercase">{t('wojewodztwaPage.questionsLeft')}</div>
+                    <div className="text-[10px] md:text-xs text-zinc-500 uppercase leading-tight">{t('wojewodztwaPage.questionsLeft')}</div>
                   </div>
-                  <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                    <div className="text-2xl font-bold text-teal-500 mb-1">
+                  <div className="text-center p-2 md:p-3 bg-zinc-800/50 rounded-lg">
+                    <div className="text-xl md:text-2xl font-bold text-teal-500 mb-0.5 md:mb-1">
                       {gameState.remaining_guesses}
                     </div>
-                    <div className="text-xs text-zinc-500 uppercase">{t('wojewodztwaPage.guessesLeft')}</div>
+                    <div className="text-[10px] md:text-xs text-zinc-500 uppercase leading-tight">{t('wojewodztwaPage.guessesLeft')}</div>
                   </div>
                </div>
             </div>
 
             {guesses.length > 0 && (
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-sm">{t('wojewodztwaPage.yourGuesses')}</h3>
-                    <div className="space-y-2">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 md:p-6 shadow-md">
+                    <h3 className="font-bold text-zinc-400 uppercase tracking-wider mb-4 text-[10px] md:text-sm">{t('wojewodztwaPage.yourGuesses')}</h3>
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                         {guesses.map((g) => (
-                            <div key={g.id} className={`flex items-center justify-between p-3 rounded-lg border ${g.answer ? 'bg-green-900/20 border-green-500/50 text-green-400' : 'bg-red-900/20 border-red-500/50 text-red-400'}`}>
-                                <span className="font-medium">{g.guess}</span>
-                                {g.answer ? <span className="text-green-500">{t('wojewodztwaPage.correct')}</span> : <span className="text-red-500">{t('wojewodztwaPage.incorrect')}</span>}
+                            <div key={g.id} className={`flex items-center justify-between p-2 md:p-3 rounded-lg border ${g.answer ? 'bg-green-900/20 border-green-500/50 text-green-400' : 'bg-red-900/20 border-red-500/50 text-red-400'} text-sm md:text-base`}>
+                                <span className="font-medium truncate mr-2">{g.guess}</span>
+                                {g.answer ? <span className="text-green-500 shrink-0 text-xs md:text-sm font-bold">{t('wojewodztwaPage.correct')}</span> : <span className="text-red-500 shrink-0 text-xs md:text-sm font-bold">{t('wojewodztwaPage.incorrect')}</span>}
                             </div>
                         ))}
                     </div>
                 </div>
             )}
         </div>
+
       </div>
     </div>
   );
