@@ -11,6 +11,12 @@ services:
     image: pgvector/pgvector:pg17
     container_name: database
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - countrydle
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -18,15 +24,21 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - countrydle
     ports:
-      - 6351:6333
-      - 6352:6334
+      - 127.0.0.1:6351:6333
+      - 127.0.0.1:6352:6334
     volumes:
       - qdrant_snapshots:/qdrant/snapshots
       - qdrant_data:/qdrant/storage
@@ -36,9 +48,16 @@ services:
   backend:
     container_name: server
     image: ghcr.io/melzak252/countrydle-backend:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
     restart: always
+    networks:
+      - countrydle
     ports:
-      - "8082:8080"
+      - "127.0.0.1:8082:8080"
     depends_on:
       - db
       - qdrant
@@ -65,7 +84,13 @@ services:
     container_name: client
     image: ghcr.io/melzak252/countrydle-frontend:latest
     restart: always
+    networks:
+      - countrydle
     ports:
-      - "8083:5173"
+      - "127.0.0.1:8083:80"
     depends_on:
       - backend
+networks:
+  countrydle:
+    driver: bridge
+

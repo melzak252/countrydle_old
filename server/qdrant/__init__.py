@@ -68,6 +68,7 @@ async def sync_from_postgres(session: AsyncSession, collection_name: str):
         logging.error(f"Error checking counts for {collection_name}: {e}")
         return
     
+    logging.info(f"Fetching {pg_count} fragments from Postgres for collection '{collection_name}'...")
     points = []
     if collection_name == "countries":
         res = await session.execute(select(CountryFragment))
@@ -91,14 +92,18 @@ async def sync_from_postgres(session: AsyncSession, collection_name: str):
             points.append(PointStruct(id=int(f.id), vector=list(f.embedding), payload={"us_state_id": f.us_state_id, "fragment_text": f.text}))
 
     if points:
+        logging.info(f"Starting upsert of {len(points)} points to collection '{collection_name}'...")
         upsert_in_batches(client, collection_name, points, batch_size=200)
         logging.info(f"Successfully synced {len(points)} points to {collection_name}")
+    else:
+        logging.info(f"No points to sync for collection '{collection_name}'.")
 
 
 async def init_qdrant(session: AsyncSession):
     logging.info("Initializing Qdrant collections...")
     for name in COLLECTIONS.values():
         if not client.collection_exists(name):
+            logging.info(f"Creating collection '{name}'...")
             client.create_collection(
                 collection_name=name,
                 vectors_config=VectorParams(size=EMBEDDING_SIZE, distance=Distance.COSINE),
@@ -113,6 +118,7 @@ async def init_qdrant(session: AsyncSession):
                 elif name.startswith("us_states"): field_name = "us_state_id"
                 
                 if field_name:
+                    logging.info(f"Creating payload index for '{field_name}' in collection '{name}'...")
                     client.create_payload_index(collection_name=name, field_name=field_name, field_schema="integer")
             else:
                 if name == "countries": field_name = "country_id"
@@ -121,6 +127,7 @@ async def init_qdrant(session: AsyncSession):
                 elif name == "us_states": field_name = "us_state_id"
 
                 if field_name:
+                    logging.info(f"Creating payload index for '{field_name}' in collection '{name}'...")
                     client.create_payload_index(
                         collection_name=name,
                         field_name=field_name,
@@ -132,6 +139,7 @@ async def init_qdrant(session: AsyncSession):
             await sync_from_postgres(session, name)
 
     if not client.collection_exists("questions"):
+        logging.info("Creating collection 'questions'...")
         client.create_collection(
             collection_name="questions",
             vectors_config=VectorParams(size=EMBEDDING_SIZE, distance=Distance.COSINE),

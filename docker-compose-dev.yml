@@ -3,6 +3,8 @@ services:
   db:
     image: pgvector/pgvector:pg17
     container_name: database
+    networks:
+      - countrydle
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -20,6 +22,8 @@ services:
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant
+    networks:
+      - countrydle
     ports:
       - 6351:6333
       - 6352:6334 
@@ -37,6 +41,8 @@ services:
     container_name: server
     build: ./server
     command: uvicorn app:app --host 0.0.0.0 --port 8080
+    networks:
+      - countrydle
     ports:
       - "8080:8080"
     depends_on:
@@ -72,6 +78,8 @@ services:
         VITE_RYBBIT_SCRIPT_URL: ${VITE_RYBBIT_SCRIPT_URL}
         VITE_RYBBIT_SITE_ID: ${VITE_RYBBIT_SITE_ID}
         VITE_GOOGLE_ADSENSE_ID: ${VITE_GOOGLE_ADSENSE_ID}
+    networks:
+      - countrydle
     ports:
       - "5173:80"
     depends_on:
@@ -79,3 +87,8 @@ services:
 
 volumes:
   qdrant_snapshots:
+
+networks:
+  countrydle:
+    driver: bridge
+
