@@ -101,7 +101,7 @@ async def get_fragments_matching_question(
 async def add_question_to_qdrant(
     question: Any, vector: List[float], filter_key: str, filter_value: int, collection_name: str = "questions"
 ):
-    logging.info(f"Adding question ID {question.id} to collection '{collection_name}'...")
+    print(f"Adding question ID {question.id} to collection '{collection_name}'...")
     point = PointStruct(
         id=question.id,
         vector=vector,
@@ -113,7 +113,7 @@ async def add_question_to_qdrant(
         },
     )
     qdrant.client.upsert(collection_name=collection_name, points=[point])
-    logging.info(f"Successfully added question ID {question.id} to '{collection_name}'.")
+    print(f"Successfully added question ID {question.id} to '{collection_name}'.")
 
 
 def upsert_in_batches(
@@ -127,7 +127,7 @@ def upsert_in_batches(
     Upserts points into Qdrant in batches with retry logic.
     """
     total_points = len(points)
-    logging.info(f"Starting upsert of {total_points} points into collection '{collection_name}' in batches of {batch_size}...")
+    print(f"Starting upsert of {total_points} points into collection '{collection_name}' in batches of {batch_size}...")
     
     for i in range(0, total_points, batch_size):
         batch = points[i : i + batch_size]
@@ -137,16 +137,16 @@ def upsert_in_batches(
         for attempt in range(max_retries):
             try:
                 client.upsert(collection_name=collection_name, points=batch)
-                logging.info(f"Successfully upserted batch {current_batch_num}/{total_batches} ({len(batch)} points) into '{collection_name}'.")
+                print(f"Successfully upserted batch {current_batch_num}/{total_batches} ({len(batch)} points) into '{collection_name}'.")
                 break  # Success, move to next batch
             except Exception as e:
-                logging.warning(
+                print(
                     f"Upsert failed for batch {current_batch_num}/{total_batches} (attempt {attempt + 1}/{max_retries}): {e}"
                 )
                 if attempt == max_retries - 1:
-                    logging.error(f"Failed to upsert batch starting at index {i} after {max_retries} attempts.")
+                    print(f"Failed to upsert batch starting at index {i} after {max_retries} attempts.")
                     # Optionally raise the exception if you want to stop the whole process
                     # raise e
                 time.sleep(1)  # Wait a bit before retrying
     
-    logging.info(f"Completed upsert of {total_points} points into collection '{collection_name}'.")
+    print(f"Completed upsert of {total_points} points into collection '{collection_name}'.")
