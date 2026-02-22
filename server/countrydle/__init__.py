@@ -63,7 +63,12 @@ async def get_end_state(
     session: AsyncSession = Depends(get_db),
 ):
     day_country = await CountrydleRepository(session).get_today_country()
-    state = await CountrydleStateRepository(session).get_state(user, day_country)
+    state = await CountrydleStateRepository(session).get_state(
+        user, 
+        day_country,
+        max_questions=COUNTRYDLE_CONFIG.max_questions,
+        max_guesses=COUNTRYDLE_CONFIG.max_guesses
+    )
     guesses = await CountrydleGuessRepository(session).get_user_day_guesses(
         user, day_country
     )
@@ -99,7 +104,12 @@ async def get_state(
     if not day_country:
         day_country = await CountrydleRepository(session).generate_new_day_country()
 
-    state = await CountrydleStateRepository(session).get_state(user, day_country)
+    state = await CountrydleStateRepository(session).get_state(
+        user, 
+        day_country,
+        max_questions=COUNTRYDLE_CONFIG.max_questions,
+        max_guesses=COUNTRYDLE_CONFIG.max_guesses
+    )
 
     if state and state.is_game_over:
         return await get_end_state(user, session)
@@ -113,7 +123,10 @@ async def get_state(
 
     if state is None:
         new_state = await CountrydleStateRepository(session).add_countrydle_state(
-            user, day_country
+            user, 
+            day_country,
+            max_questions=COUNTRYDLE_CONFIG.max_questions,
+            max_guesses=COUNTRYDLE_CONFIG.max_guesses
         )
         return CountrydleStateResponse(
             user=user,
@@ -163,7 +176,10 @@ async def ask_question(
         daily_country = await CountrydleRepository(session).generate_new_day_country()
 
     state = await CountrydleStateRepository(session).get_player_countrydle_state(
-        user, daily_country
+        user, 
+        daily_country,
+        max_questions=COUNTRYDLE_CONFIG.max_questions,
+        max_guesses=COUNTRYDLE_CONFIG.max_guesses
     )
 
     # Use Game Logic
@@ -250,7 +266,10 @@ async def make_guess(
         daily_country = await CountrydleRepository(session).generate_new_day_country()
 
     state = await CountrydleStateRepository(session).get_player_countrydle_state(
-        user, daily_country
+        user, 
+        daily_country,
+        max_questions=COUNTRYDLE_CONFIG.max_questions,
+        max_guesses=COUNTRYDLE_CONFIG.max_guesses
     )
 
     # Use Game Logic

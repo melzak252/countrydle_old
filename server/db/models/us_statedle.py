@@ -29,7 +29,7 @@ class USStatedleState(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     day_id = Column(Integer, ForeignKey("us_statedle_days.id"))
-    remaining_questions = Column(Integer, nullable=False, default=10)
+    remaining_questions = Column(Integer, nullable=False, default=8)
     remaining_guesses = Column(Integer, nullable=False, default=3)
     questions_asked = Column(Integer, nullable=False, default=0)
     guesses_made = Column(Integer, nullable=False, default=0)

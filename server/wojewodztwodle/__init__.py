@@ -61,7 +61,12 @@ async def get_state(
     state = await WojewodztwodleStateRepository(session).get_state(user, day_state)
     
     if state is None:
-        state = await WojewodztwodleStateRepository(session).create_state(user, day_state)
+        state = await WojewodztwodleStateRepository(session).create_state(
+            user, 
+            day_state,
+            max_questions=WOJEWODZTWDLE_CONFIG.max_questions,
+            max_guesses=WOJEWODZTWDLE_CONFIG.max_guesses
+        )
 
     guesses = await WojewodztwodleGuessRepository(session).get_user_day_guesses(user, day_state)
     questions = await WojewodztwodleQuestionRepository(session).get_user_day_questions(user, day_state)

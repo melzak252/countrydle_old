@@ -61,7 +61,12 @@ async def get_state(
     state = await USStatedleStateRepository(session).get_state(user, day_state)
     
     if state is None:
-        state = await USStatedleStateRepository(session).create_state(user, day_state)
+        state = await USStatedleStateRepository(session).create_state(
+            user, 
+            day_state,
+            max_questions=USSTATEDLE_CONFIG.max_questions,
+            max_guesses=USSTATEDLE_CONFIG.max_guesses
+        )
 
     guesses = await USStatedleGuessRepository(session).get_user_day_guesses(user, day_state)
     questions = await USStatedleQuestionRepository(session).get_user_day_questions(user, day_state)

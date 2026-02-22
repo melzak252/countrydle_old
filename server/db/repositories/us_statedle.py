@@ -61,8 +61,13 @@ class USStatedleStateRepository:
         )
         return result.scalar_one_or_none()
 
-    async def create_state(self, user: User, day: USStatedleDay) -> USStatedleState:
-        new_state = USStatedleState(user_id=user.id, day_id=day.id)
+    async def create_state(self, user: User, day: USStatedleDay, max_questions: int = 8, max_guesses: int = 3) -> USStatedleState:
+        new_state = USStatedleState(
+            user_id=user.id, 
+            day_id=day.id,
+            remaining_questions=max_questions,
+            remaining_guesses=max_guesses
+        )
         self.session.add(new_state)
         await self.session.commit()
         await self.session.refresh(new_state)

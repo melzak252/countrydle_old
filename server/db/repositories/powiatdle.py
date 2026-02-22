@@ -78,8 +78,13 @@ class PowiatdleStateRepository:
         )
         return result.scalar_one_or_none()
 
-    async def create_state(self, user: User, day: PowiatdleDay) -> PowiatdleState:
-        new_state = PowiatdleState(user_id=user.id, day_id=day.id)
+    async def create_state(self, user: User, day: PowiatdleDay, max_questions: int = 15, max_guesses: int = 3) -> PowiatdleState:
+        new_state = PowiatdleState(
+            user_id=user.id, 
+            day_id=day.id,
+            remaining_questions=max_questions,
+            remaining_guesses=max_guesses
+        )
         self.session.add(new_state)
         await self.session.commit()
         await self.session.refresh(new_state)

@@ -332,7 +332,7 @@ class CountrydleStateRepository:
         return state
 
     async def get_player_countrydle_state(
-        self, user: User, day: CountrydleDay
+        self, user: User, day: CountrydleDay, max_questions: int = 10, max_guesses: int = 3
     ) -> CountrydleState:
         result = await self.session.execute(
             select(CountrydleState)
@@ -343,7 +343,7 @@ class CountrydleStateRepository:
         state = result.scalars().first()
 
         if state is None:
-            return await self.add_countrydle_state(user, day)
+            return await self.add_countrydle_state(user, day, max_questions, max_guesses)
 
         return state
 
@@ -403,7 +403,7 @@ class CountrydleStateRepository:
 
         return new_entry
 
-    async def get_state(self, user: User, day: CountrydleDay) -> CountrydleState:
+    async def get_state(self, user: User, day: CountrydleDay, max_questions: int = 10, max_guesses: int = 3) -> CountrydleState:
         result = await self.session.execute(
             select(CountrydleState)
             .where(CountrydleState.user_id == user.id, CountrydleState.day_id == day.id)
@@ -413,7 +413,7 @@ class CountrydleStateRepository:
         state = result.scalars().first()
 
         if state is None:
-            return await self.add_countrydle_state(user, day)
+            return await self.add_countrydle_state(user, day, max_questions, max_guesses)
 
         return state
 
