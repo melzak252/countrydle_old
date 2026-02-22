@@ -191,6 +191,10 @@ const resources = {
         statsDaily: 'Daily',
         statsChallenges: 'New Challenges',
         games: {
+          worldTitle: 'Countrydle',
+          usStatesTitle: 'US Statedle',
+          powiatyTitle: 'Powiatdle',
+          wojewodztwaTitle: 'Wojewodztwdle',
           worldDescription: 'Guess the mystery country from across the globe.',
           usStatesDescription: 'Test your knowledge of the 50 United States.',
           powiatyDescription: 'Polish counties (powiaty) challenge for experts.',
@@ -460,6 +464,10 @@ const resources = {
         statsDaily: 'Codziennie',
         statsChallenges: 'Nowe wyzwania',
         games: {
+          worldTitle: 'Countrydle',
+          usStatesTitle: 'US Statedle',
+          powiatyTitle: 'Powiatdle',
+          wojewodztwaTitle: 'Wojewodztwdle',
           worldDescription: 'Odgadnij tajemniczy kraj z calego swiata.',
           usStatesDescription: 'Sprawdz swoja wiedze o 50 stanach USA.',
           powiatyDescription: 'Wyzwanie z polskich powiatow dla ekspertow.',

@@ -18,7 +18,7 @@ export default function HomePage() {
   const games = [
     {
       id: 'world',
-      title: 'Countrydle',
+      title: t('home.games.worldTitle'),
       description: t('home.games.worldDescription'),
       path: '/game',
       icon: <Globe size={32} className="text-blue-500" />,
@@ -27,7 +27,7 @@ export default function HomePage() {
     },
     {
       id: 'us-states',
-      title: 'US Statedle',
+      title: t('home.games.usStatesTitle'),
       description: t('home.games.usStatesDescription'),
       path: '/us-states',
       icon: <MapIcon size={32} className="text-indigo-500" />,
@@ -36,7 +36,7 @@ export default function HomePage() {
     },
     {
       id: 'powiaty',
-      title: 'Powiatdle',
+      title: t('home.games.powiatyTitle'),
       description: t('home.games.powiatyDescription'),
       path: '/powiaty',
       icon: <MapPin size={32} className="text-red-500" />,
@@ -45,7 +45,7 @@ export default function HomePage() {
     },
     {
       id: 'wojewodztwa',
-      title: 'Wojewodztwdle',
+      title: t('home.games.wojewodztwaTitle'),
       description: t('home.games.wojewodztwaDescription'),
       path: '/wojewodztwa',
       icon: <Flag size={32} className="text-green-500" />,
