@@ -22,7 +22,7 @@ services:
     container_name: qdrant
     ports:
       - 6351:6333
-      - 6352:6334
+      - 6352:6334 
     expose:
       - 6333
       - 6334

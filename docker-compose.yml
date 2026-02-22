@@ -1,55 +1,49 @@
 version: '3.8'
 services:
-  # nginx:
-  #   image: nginx:latest
-  #   container_name: nginx
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro  # Your NGINX configuration
-  #     - /etc/ssl/certs:/etc/ssl/certs:ro  # Mount the SSL certs directory
-  #   depends_on:
-  #     - frontend
-  #     - backend
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant
-    ports:
-      - 6351:6333
-      - 6352:6334
-    expose:
-      - 6333
-      - 6334
-      - 6335
-    volumes:
-      - ./databases/qdrant/snapshots:/qdrant/snapshots
-      - ./qdrant_data:/qdrant/storage
-    depends_on:
-      - db
   db:
-    image: postgres:14
+    image: pgvector/pgvector:pg17
     container_name: database
-    build:
-      context: ./databases/postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-      - ./backups:/backups
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - 6351:6333
+      - 6352:6334 
+    expose:
+      - 6333
+      - 6334
+      - 6335
+    volumes:
+      - qdrant_snapshots:/qdrant/snapshots
+      - ./qdrant_data:/qdrant/storage
+    depends_on:
+      - db
+
   backend:
     container_name: server
     build: ./server
-    restart: always
+    command: uvicorn app:app --host 0.0.0.0 --port 8080
     ports:
       - "8080:8080"
     depends_on:
-      - db
-      - qdrant
+      db:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - DATABASE_URL=${DATABASE_URL}
@@ -66,15 +60,22 @@ services:
       - EMAIL_PASSWORD=${EMAIL_PASSWORD}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     volumes:
+      - ./server:/usr/src/app
       - ./data:/usr/src/app/data
-      - ./databases/qdrant/snapshots:/qdrant/snapshots
+
   frontend:
     container_name: client
     build:
       context: ./client
       args:
         VITE_API_URL: ${VITE_API_URL}
+        VITE_RYBBIT_SCRIPT_URL: ${VITE_RYBBIT_SCRIPT_URL}
+        VITE_RYBBIT_SITE_ID: ${VITE_RYBBIT_SITE_ID}
+        VITE_GOOGLE_ADSENSE_ID: ${VITE_GOOGLE_ADSENSE_ID}
     ports:
       - "5173:80"
+    depends_on:
+      - backend
 
-
+volumes:
+  qdrant_snapshots:
