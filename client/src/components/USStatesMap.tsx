@@ -8,6 +8,7 @@ import { RotateCcw, Check } from 'lucide-react';
 
 interface USStatesMapProps {
   correctStateName?: string;
+  className?: string;
 }
 
 function MapController({ correctName, geoJsonData }: { correctName?: string, geoJsonData: any }) {
@@ -33,7 +34,7 @@ function MapController({ correctName, geoJsonData }: { correctName?: string, geo
   return null;
 }
 
-export default function USStatesMap({ correctStateName }: USStatesMapProps) {
+export default function USStatesMap({ correctStateName, className }: USStatesMapProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [map, setMap] = useState<L.Map | null>(null);
   const { selectedEntityNames, toggleEntitySelection, clearSelection, gameState, correctEntity } = useUSStatesGameStore();
@@ -151,7 +152,7 @@ export default function USStatesMap({ correctStateName }: USStatesMapProps) {
   }
 
   return (
-    <div className="h-[400px] md:h-[600px] w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg relative z-0">
+    <div className={`w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg relative z-0 ${className ? className : 'h-[400px] md:h-[600px]'}`}>
       <style>{`
         .leaflet-interactive:focus {
             outline: none;

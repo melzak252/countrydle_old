@@ -8,6 +8,7 @@ import { RotateCcw, Check } from 'lucide-react';
 
 interface MapBoxProps {
   correctCountryName?: string;
+  className?: string;
 }
 
 interface MapControlsProps {
@@ -90,7 +91,7 @@ function MapController({ correctCountryName, geoJsonData }: { correctCountryName
   return null;
 }
 
-export default function MapBox({ correctCountryName }: MapBoxProps) {
+export default function MapBox({ correctCountryName, className }: MapBoxProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [map, setMap] = useState<L.Map | null>(null);
   const { selectedEntityNames, toggleEntitySelection, gameState } = useGameStore();
@@ -197,7 +198,7 @@ export default function MapBox({ correctCountryName }: MapBoxProps) {
   }
 
   return (
-    <div className="h-[350px] md:h-[500px] w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg mb-4 md:mb-8 relative z-0">
+    <div className={`w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg relative z-0 ${className ? className : 'h-[350px] md:h-[500px] mb-4 md:mb-8'}`}>
       <style>{`
         .leaflet-interactive:focus {
             outline: none;

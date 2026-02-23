@@ -67,8 +67,11 @@ const resources = {
         questionsLeft: 'Questions Left',
         guessesLeft: 'Guesses Left',
         yourGuesses: 'Your Guesses',
+        askQuestion: 'Ask a Question',
+        makeAGuess: 'Make a Guess',
         correct: 'Correct',
         incorrect: 'Incorrect',
+
         examples: [
           'Is it in Europe?',
           'Does it have access to the sea?',
@@ -231,8 +234,11 @@ const resources = {
         questionsLeft: 'Pozostale pytania',
         guessesLeft: 'Pozostale proby',
         yourGuesses: 'Twoje strzaly',
+        askQuestion: 'Zadaj pytanie',
+        makeAGuess: 'Zgadnij',
         correct: 'Poprawnie',
         incorrect: 'Blednie',
+
         examples: [
           'Czy lezy w Europie?',
           'Czy ma dostep do morza?',

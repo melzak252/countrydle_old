@@ -40,7 +40,11 @@ from users.utils import (
 from utils.email import fm_noreply
 
 app = FastAPI(lifespan=lifespan)
+
+SERVER_VERSION = "1.0.0"
+
 app.add_middleware(
+
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
@@ -70,6 +74,12 @@ app.include_router(wojewodztwodle_router, tags=["wojewodztwodle"])
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Game API!"}
+
+
+@app.get("/version")
+async def get_version():
+    return {"version": SERVER_VERSION}
+
 
 
 @app.get("/time")

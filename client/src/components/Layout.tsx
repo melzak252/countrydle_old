@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 import Header from './Header';
 import Footer from './Footer';
 import CookieConsent from './CookieConsent';
+import VersionDisplay from './VersionDisplay';
 
 export default function Layout() {
   const { user, isAuthenticated } = useAuthStore();
@@ -24,6 +25,7 @@ export default function Layout() {
       </main>
       <Footer />
       <CookieConsent />
+      <VersionDisplay />
     </div>
   );
 }
