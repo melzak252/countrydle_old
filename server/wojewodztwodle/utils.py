@@ -118,7 +118,7 @@ Instrukcje:
 - Opieraj swoje odpowiedzi głównie na dostarczonym kontekście. Jeśli kontekst nie zawiera wystarczających informacji, użyj swojej wiedzy ogólnej, aby udzielić jak najdokładniejszej odpowiedzi.
 - Jeśli nie możesz ustalić odpowiedzi nawet przy użyciu wiedzy ogólnej, ustaw "answer" na null.
 - Uwzględnij wszelkie istotne szczegóły z dostarczonego kontekstu dotyczące województwa w swoich wyjaśnieniach.
-- Jeśli pytanie dotyczy tego, czy województwo sąsiaduje samo ze sobą, odpowiedz "true".
+- Jeśli pytanie dotyczy tego, czy województwo sąsiaduje z [X], a województwem DO ODGADNIĘCIA JEST [X], odpowiedz "true". Traktuj województwo jako sąsiadujące same ze sobą na potrzeby tej gry.
 - Wyjaśnienia powinny być podane przed odpowiedzią.
 - Odpowiedź powinna być spójna z wyjaśnieniem.
 - Zawsze odpowiadaj w języku polskim.

@@ -118,7 +118,7 @@ Instrukcje:
 - Opieraj swoje odpowiedzi głównie na dostarczonym kontekście. Jeśli kontekst nie zawiera wystarczających informacji, użyj swojej wiedzy ogólnej, aby udzielić jak najdokładniejszej odpowiedzi.
 - Jeśli nie możesz ustalić odpowiedzi nawet przy użyciu wiedzy ogólnej, ustaw "answer" na null.
 - Uwzględnij wszelkie istotne szczegóły z dostarczonego kontekstu dotyczące powiatu w swoich wyjaśnieniach.
-- Jeśli pytanie dotyczy tego, czy powiat sąsiaduje sam ze sobą, odpowiedz "true".
+- Jeśli pytanie dotyczy tego, czy powiat sąsiaduje z [X], a powiatem DO ODGADNIĘCIA JEST [X], odpowiedz "true". Traktuj powiat jako sąsiadujący sam ze sobą na potrzeby tej gry.
 - Wyjaśnienia powinny być podane przed odpowiedzią.
 - Odpowiedź powinna być spójna z wyjaśnieniem.
 - Zawsze odpowiadaj w języku polskim.

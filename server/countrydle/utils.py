@@ -146,7 +146,8 @@ Instructions:
 - Base your answers primarily on the provided context. If the context does not contain enough information, use your general knowledge to provide the most accurate answer possible.
 - If you cannot determine the answer even with general knowledge, set "answer" to null.
 - Incorporate any relevant details from the provided context about the country into your explanations.
-- If the question asks whether the country is a neighbor of itself or shares boreder with itself, answer "true".
+- If the question asks if the country borders/neighbors [X], and the secret country IS [X], answer "true". Treat a country as bordering itself for the purpose of this game.
+
 - For any questions about events or information from April 2024 onwards, set "answer" to null.
 - Explanations should be provided before the answer.
 - Answer should be consistent with the explanation.

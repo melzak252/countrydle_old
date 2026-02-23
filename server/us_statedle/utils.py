@@ -140,7 +140,7 @@ Instructions:
 - Base your answers primarily on the provided context. If the context does not contain enough information, use your general knowledge to provide the most accurate answer possible.
 - If you cannot determine the answer even with general knowledge, set "answer" to null.
 - Incorporate any relevant details from the provided context about the state into your explanations.
-- If the question asks whether the state is a neighbor of itself, answer "true".
+- If the question asks if the state borders/neighbors [X], and the secret state IS [X], answer "true". Treat a state as bordering itself for the purpose of this game.
 - Explanations should be provided before the answer.
 - Answer should be consistent with the explanation.
 
