@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { authService } from '../services/api';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
-import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -13,9 +13,20 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+
+  useEffect(() => {
+    const sessionExpired = localStorage.getItem('session_expired');
+    if (sessionExpired === 'true') {
+      toast.error('Your session has expired. Please log in again.', {
+        duration: 5000,
+        icon: '🔒',
+      });
+      localStorage.removeItem('session_expired');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -29,7 +40,7 @@ export default function LoginPage() {
       login(user);
       navigate('/game');
     } catch (err: any) {
-      setError(err.response?.data?.detail || t('auth.loginFailed'));
+      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -44,18 +55,18 @@ export default function LoginPage() {
             login(user);
             navigate('/game');
         } catch (err: any) {
-            setError(err.response?.data?.detail || t('auth.googleLoginFailed'));
+            setError(err.response?.data?.detail || 'Google Login failed.');
         } finally {
             setLoading(false);
         }
     },
-    onError: () => setError(t('auth.googleLoginFailed')),
+    onError: () => setError('Google Login Failed'),
   });
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 p-8 rounded-xl shadow-xl">
-        <h2 className="text-2xl font-bold mb-6 text-center">{t('auth.loginTitle')}</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Login to Countrydle</h2>
         
         {error && (
           <div className="bg-red-900/20 border border-red-500/50 text-red-500 p-3 rounded-lg mb-4 text-sm">
@@ -65,7 +76,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">{t('auth.username')}</label>
+            <label className="block text-sm font-medium text-zinc-400 mb-1">Username</label>
             <input
               type="text"
               value={username}
@@ -75,7 +86,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">{t('auth.password')}</label>
+            <label className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
             <input
               type="password"
               value={password}
@@ -90,13 +101,13 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : t('auth.login')}
+            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login'}
           </button>
         </form>
 
         <div className="my-6 flex items-center">
             <div className="flex-1 border-t border-zinc-700"></div>
-            <span className="px-4 text-zinc-500 text-sm">{t('auth.or')}</span>
+            <span className="px-4 text-zinc-500 text-sm">OR</span>
             <div className="flex-1 border-t border-zinc-700"></div>
         </div>
 
@@ -124,14 +135,14 @@ export default function LoginPage() {
                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                     />
                 </svg>
-                {t('auth.signInWithGoogle')}
+                Sign in with Google
              </button>
         </div>
 
         <p className="mt-6 text-center text-sm text-zinc-500">
-          {t('auth.noAccount')}{' '}
+          Don't have an account?{' '}
           <Link to="/register" className="text-blue-500 hover:text-blue-400">
-            {t('auth.signUp')}
+            Sign up
           </Link>
         </p>
       </div>

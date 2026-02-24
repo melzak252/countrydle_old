@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { CountryDisplay } from '../types';
 import { Search } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface GuessInputProps {
   countries: CountryDisplay[];
@@ -9,12 +8,12 @@ interface GuessInputProps {
   isLoading: boolean;
   remainingGuesses: number;
   placeholder?: string;
+  className?: string;
 }
 
-export default function GuessInput({ countries, onGuess, isLoading, remainingGuesses, placeholder }: GuessInputProps) {
+export default function GuessInput({ countries, onGuess, isLoading, remainingGuesses, placeholder, className }: GuessInputProps) {
   const [query, setQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const { t } = useTranslation();
 
   const filteredCountries = useMemo(() => {
     if (!query || !countries) return [];
@@ -32,10 +31,10 @@ export default function GuessInput({ countries, onGuess, isLoading, remainingGue
     setShowSuggestions(false);
   };
 
-  const defaultPlaceholder = t('inputs.guessPlaceholder', { count: remainingGuesses });
+  const defaultPlaceholder = `Guess the country... (${remainingGuesses} left)`;
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-12 relative">
+    <div className={`w-full max-w-2xl mx-auto relative ${className || 'mb-6 md:mb-12'}`}>
       <div className="relative">
         <input
           type="text"
@@ -46,19 +45,19 @@ export default function GuessInput({ countries, onGuess, isLoading, remainingGue
           }}
           onFocus={() => setShowSuggestions(true)}
           placeholder={placeholder || defaultPlaceholder}
-          className="w-full bg-zinc-800 border-2 border-zinc-700 rounded-xl px-6 py-4 pl-12 text-lg focus:outline-none focus:border-green-500 transition-colors disabled:opacity-50"
+          className="w-full bg-zinc-800 border-2 border-zinc-700 rounded-xl px-3 py-2 md:px-4 md:py-3 pl-9 md:pl-10 text-sm md:text-base focus:outline-none focus:border-green-500 transition-colors disabled:opacity-50"
           disabled={isLoading || remainingGuesses <= 0}
         />
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4 md:w-5 md:h-5" />
       </div>
 
       {showSuggestions && filteredCountries.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden z-10">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl overflow-hidden z-[60]">
           {filteredCountries.map((country) => (
             <button
               key={country.id}
               onClick={() => handleSelect(country)}
-              className="w-full text-left px-6 py-3 hover:bg-zinc-700 transition-colors border-b border-zinc-700 last:border-0"
+              className="w-full text-left px-3 py-2 hover:bg-zinc-700 transition-colors border-b border-zinc-700 last:border-0 text-sm"
             >
               {country.name || (country as any).nazwa}
             </button>

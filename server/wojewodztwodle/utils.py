@@ -29,7 +29,8 @@ Instrukcje:
     - Używając "tu" lub "tam": "czy tu jest ...?", "czy tam jest ...?" itp.
     - W różnych językach (głównie polskim lub angielskim).
 - Zawsze odpowiadaj w języku polskim.
-- Ulepszone pytanie powinno zawsze używać formy "czy województwo ...".
+- Ulepszone pytanie musi zawsze mieć "województwo" jako podmiot zdania (np. "Czy województwo znajduje się na południu?").
+- Sprawdź, czy pytanie ma sens i czy jest poprawnym zapytaniem o polskie województwo.
 
 ### Format wyjściowy
 Odpowiedz w formacie JSON i niczym więcej.
@@ -117,7 +118,7 @@ Instrukcje:
 - Opieraj swoje odpowiedzi głównie na dostarczonym kontekście. Jeśli kontekst nie zawiera wystarczających informacji, użyj swojej wiedzy ogólnej, aby udzielić jak najdokładniejszej odpowiedzi.
 - Jeśli nie możesz ustalić odpowiedzi nawet przy użyciu wiedzy ogólnej, ustaw "answer" na null.
 - Uwzględnij wszelkie istotne szczegóły z dostarczonego kontekstu dotyczące województwa w swoich wyjaśnieniach.
-- Jeśli pytanie dotyczy tego, czy województwo sąsiaduje samo ze sobą, odpowiedz "true".
+- Jeśli pytanie dotyczy tego, czy województwo sąsiaduje z [X], a województwem DO ODGADNIĘCIA JEST [X], odpowiedz "true". Traktuj województwo jako sąsiadujące same ze sobą na potrzeby tej gry.
 - Wyjaśnienia powinny być podane przed odpowiedzią.
 - Odpowiedź powinna być spójna z wyjaśnieniem.
 - Zawsze odpowiadaj w języku polskim.

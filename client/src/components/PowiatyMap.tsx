@@ -8,6 +8,7 @@ import { RotateCcw, Check } from 'lucide-react';
 
 interface PowiatyMapProps {
   correctPowiatName?: string;
+  className?: string;
 }
 
 function MapController({ correctName, geoJsonData }: { correctName?: string, geoJsonData: any }) {
@@ -33,7 +34,7 @@ function MapController({ correctName, geoJsonData }: { correctName?: string, geo
   return null;
 }
 
-export default function PowiatyMap({ correctPowiatName }: PowiatyMapProps) {
+export default function PowiatyMap({ correctPowiatName, className }: PowiatyMapProps) {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [map, setMap] = useState<L.Map | null>(null);
   const { selectedEntityNames: selectedPowiaty, toggleEntitySelection: togglePowiat, clearSelection, gameState } = usePowiatyGameStore();
@@ -148,11 +149,11 @@ export default function PowiatyMap({ correctPowiatName }: PowiatyMapProps) {
   };
 
   if (!geoJsonData) {
-    return <div className="h-[500px] w-full bg-zinc-900 rounded-xl animate-pulse flex items-center justify-center text-zinc-500">Ładowanie mapy powiatów...</div>;
+    return <div className="h-[350px] md:h-[500px] w-full bg-zinc-900 rounded-xl animate-pulse flex items-center justify-center text-zinc-500">Ładowanie mapy powiatów...</div>;
   }
 
   return (
-    <div className="h-[600px] w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg relative z-0">
+    <div className={`w-full bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-lg relative z-0 ${className ? className : 'h-[400px] md:h-[600px]'}`}>
       <style>{`
         .leaflet-interactive:focus {
             outline: none;

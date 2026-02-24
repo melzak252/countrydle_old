@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Info, HelpCircle, ChevronDown, ChevronUp, Languages, Trophy } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Info, HelpCircle, Languages, Trophy, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { createPortal } from 'react-dom';
 
 interface GameInstructionsProps {
   gameName: string;
@@ -14,24 +15,46 @@ interface GameInstructionsProps {
 const GameInstructions = ({ gameName, examples, scoring }: GameInstructionsProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl mb-6 overflow-hidden shadow-lg transition-all duration-300">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-4 flex items-center justify-between bg-zinc-800/30 hover:bg-zinc-800/50 transition-colors"
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const modalContent = (
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div 
+        ref={modalRef}
+        className="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
       >
-        <div className="flex items-center gap-2 text-blue-400">
-          <Info size={20} />
-          <h3 className="font-bold text-lg">
-            {t('instructions.title')}
-          </h3>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50 sticky top-0">
+           <div className="flex items-center gap-2 text-blue-400">
+             <Info size={20} />
+             <h3 className="font-bold text-lg">{t('instructions.title')}</h3>
+           </div>
+           <button 
+             onClick={() => setIsOpen(false)}
+             className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+           >
+             <X size={20} />
+           </button>
         </div>
-        {isOpen ? <ChevronUp size={20} className="text-zinc-500" /> : <ChevronDown size={20} className="text-zinc-500" />}
-      </button>
-      
-      {isOpen && (
-        <div className="p-6 border-t border-zinc-800 animate-in fade-in slide-in-from-top-2 duration-200">
+
+        {/* Scrollable Content */}
+        <div className="p-6 overflow-y-auto custom-scrollbar">
           <div className="space-y-6">
             <p className="text-zinc-300 leading-relaxed text-sm md:text-base">
               {t('instructions.welcome', { gameName })}
@@ -78,7 +101,7 @@ const GameInstructions = ({ gameName, examples, scoring }: GameInstructionsProps
                 <HelpCircle size={16} />
                 {t('instructions.examples')}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 {examples.map((example, index) => (
                   <div key={index} className="bg-zinc-800/50 border border-zinc-700/50 px-4 py-2 rounded-lg text-zinc-400 text-xs md:text-sm italic">
                     "{example}"
@@ -88,9 +111,23 @@ const GameInstructions = ({ gameName, examples, scoring }: GameInstructionsProps
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
+  );
+
+  return (
+    <>
+      <button 
+        onClick={() => setIsOpen(true)}
+        className="p-2 text-zinc-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+        title={t('instructions.title')}
+      >
+        <HelpCircle size={20} />
+      </button>
+      {isOpen && createPortal(modalContent, document.body)}
+    </>
   );
 };
 
 export default GameInstructions;
+
