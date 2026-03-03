@@ -2,6 +2,8 @@ import os
 import json
 import asyncio
 import argparse
+import warnings
+import logging
 from typing import List
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -9,6 +11,12 @@ from langchain_neo4j import Neo4jGraph
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_community.document_loaders import UnstructuredMarkdownLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from tqdm.asyncio import tqdm
+
+# Silence Pydantic serialization warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
+warnings.filterwarnings("ignore", message=".*PydanticSerializationUnexpectedValue.*")
+logging.getLogger("pydantic").setLevel(logging.ERROR)
 
 load_dotenv()
 
@@ -18,6 +26,7 @@ NEO4J_USERNAME = os.getenv("NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL_NAME = "gpt-4o-mini" 
+CONCURRENCY_LIMIT = 5 # Number of entities to process in parallel
 
 # Initialize Neo4j
 print(f"Connecting to Neo4j at {NEO4J_URI}...")
@@ -42,7 +51,7 @@ GAME_CONFIG = {
 def export_to_json(game_key: str):
     game_label = GAME_CONFIG[game_key]["label"]
     output_file = f"{game_key}_graph_backup.json"
-    print(f"Exporting {game_label} graph to {output_file}...")
+    print(f"\nExporting {game_label} graph to {output_file}...")
     
     query = """
     MATCH (n {game: $game})
@@ -54,63 +63,69 @@ def export_to_json(game_key: str):
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(results, f, ensure_ascii=False, indent=2, default=str)
 
-async def process_entity(file_path: str, entity_name: str, game_label: str, node_label: str):
-    print(f"  Extracting graph for: {entity_name}")
-    try:
-        loader = UnstructuredMarkdownLoader(file_path)
-        raw_docs = loader.load()
-        docs = text_splitter.split_documents(raw_docs)
-        print(f"    Split into {len(docs)} chunks.")
-        
-        for doc in docs:
-            doc.metadata["entity"] = entity_name
-            doc.metadata["game"] = game_label
-        
-        print(f"    Transforming to graph documents (this may take a while)...")
-        batch_size = 5
-        for i in range(0, len(docs), batch_size):
-            batch = docs[i:i+batch_size]
-            print(f"      Processing batch {i//batch_size + 1}/{(len(docs)-1)//batch_size + 1}...")
-            graph_docs = transformer.convert_to_graph_documents(batch)
-            
-            for g_doc in graph_docs:
-                for node in g_doc.nodes:
-                    # Prefix ID with entity name for total isolation
-                    original_id = node.id
-                    node.id = f"{entity_name}:{original_id}"
-                    
-                    node.properties["entity"] = entity_name
-                    node.properties["game"] = game_label
-                    node.properties["original_id"] = original_id
-                    node.type = node_label
-                
-                for rel in g_doc.relationships:
-                    # Update source and target IDs to match prefixed IDs
-                    rel.source.id = f"{entity_name}:{rel.source.id}"
-                    rel.target.id = f"{entity_name}:{rel.target.id}"
-                    
-                    rel.properties["entity"] = entity_name
-                    rel.properties["game"] = game_label
-            
-            print(f"      Adding batch to Neo4j...")
-            graph.add_graph_documents(graph_docs, baseEntityLabel=node_label)
-            
-            link_query = f"""
-            MATCH (n {{entity: $entity, game: $game}})
-            WHERE n:{node_label} OR n:__Entity__
-            MERGE (root:RootEntity {{name: $entity, game: $game}})
-            SET root:{node_label}
-            WITH n, root
-            WHERE n <> root
-            MERGE (root)-[:HAS_INFORMATION {{entity: $entity, game: $game}}]->(n)
-            """
-            graph.query(link_query, {"entity": entity_name, "game": game_label})
-        
-        print(f"    Successfully added all batches for {entity_name} to Neo4j.")
-    except Exception as e:
-        print(f"    Error processing {entity_name}: {e}")
+async def check_entity_exists(entity_name: str, game_label: str) -> bool:
+    query = "MATCH (n:RootEntity {name: $name, game: $game}) RETURN count(n) > 0 as exists"
+    result = await asyncio.to_thread(graph.query, query, {"name": entity_name, "game": game_label})
+    return result[0]['exists'] if result else False
 
-async def process_game(game_key: str):
+async def process_entity(file_path: str, entity_name: str, game_label: str, node_label: str, semaphore: asyncio.Semaphore, pbar=None):
+    async with semaphore:
+        # Check if already exists
+        if await check_entity_exists(entity_name, game_label):
+            if pbar:
+                pbar.update(1)
+            return
+
+        try:
+            loader = UnstructuredMarkdownLoader(file_path)
+            raw_docs = await asyncio.to_thread(loader.load)
+            docs = text_splitter.split_documents(raw_docs)
+            
+            for doc in docs:
+                doc.metadata["entity"] = entity_name
+                doc.metadata["game"] = game_label
+            
+            batch_size = 5
+            for i in range(0, len(docs), batch_size):
+                batch = docs[i:i+batch_size]
+                graph_docs = await asyncio.to_thread(transformer.convert_to_graph_documents, batch)
+                
+                for g_doc in graph_docs:
+                    for node in g_doc.nodes:
+                        original_id = node.id
+                        node.id = f"{entity_name}:{original_id}"
+                        node.properties["entity"] = entity_name
+                        node.properties["game"] = game_label
+                        node.properties["original_id"] = original_id
+                        node.type = node_label
+                    
+                    for rel in g_doc.relationships:
+                        rel.source.id = f"{entity_name}:{rel.source.id}"
+                        rel.target.id = f"{entity_name}:{rel.target.id}"
+                        rel.properties["entity"] = entity_name
+                        rel.properties["game"] = game_label
+                
+                await asyncio.to_thread(graph.add_graph_documents, graph_docs, baseEntityLabel=node_label)
+                
+                link_query = f"""
+                MATCH (n {{entity: $entity, game: $game}})
+                WHERE n:{node_label} OR n:__Entity__
+                MERGE (root:RootEntity {{name: $entity, game: $game}})
+                SET root:{node_label}
+                WITH n, root
+                WHERE n <> root
+                MERGE (root)-[:HAS_INFORMATION {{entity: $entity, game: $game}}]->(n)
+                """
+                await asyncio.to_thread(graph.query, link_query, {"entity": entity_name, "game": game_label})
+            
+        except Exception as e:
+            # Use tqdm.write to avoid breaking the progress bar
+            tqdm.write(f"\nError processing {entity_name}: {e}")
+        finally:
+            if pbar:
+                pbar.update(1)
+
+async def process_game(game_key: str, semaphore: asyncio.Semaphore):
     config = GAME_CONFIG[game_key]
     directory_path = config["dir"]
     game_label = config["label"]
@@ -122,22 +137,30 @@ async def process_game(game_key: str):
         print(f"Directory {directory_path} does not exist. Skipping.")
         return
 
-    for filename in os.listdir(directory_path):
-        if filename.endswith(".md"):
+    files = [f for f in os.listdir(directory_path) if f.endswith(".md")]
+    
+    with tqdm(total=len(files), desc=f"Processing {game_label}", unit="entity") as pbar:
+        tasks = []
+        for filename in files:
             file_path = os.path.join(directory_path, filename)
             entity_name = filename.replace(".md", "").replace("_", " ")
-            await process_entity(file_path, entity_name, game_label, node_label)
+            tasks.append(process_entity(file_path, entity_name, game_label, node_label, semaphore, pbar))
 
+        await asyncio.gather(*tasks)
+    
     export_to_json(game_key)
 
 async def main():
     parser = argparse.ArgumentParser(description="Populate Neo4j GraphRAG for Countrydle games.")
     parser.add_argument("--game", choices=["countries", "powiaty", "us_states", "wojewodztwa", "all"], default="all")
     parser.add_argument("--entities", nargs="+", help="Specific entities to process (e.g., Poland Germany)")
+    parser.add_argument("--concurrency", type=int, default=CONCURRENCY_LIMIT, help="Number of entities to process in parallel")
     args = parser.parse_args()
 
+    semaphore = asyncio.Semaphore(args.concurrency)
+
     try:
-        graph.query("RETURN 1")
+        await asyncio.to_thread(graph.query, "RETURN 1")
     except Exception as e:
         print(f"Neo4j connection failed: {e}")
         return
@@ -145,7 +168,7 @@ async def main():
     if args.game == "all":
         for game_key in GAME_CONFIG.keys():
             try:
-                await process_game(game_key)
+                await process_game(game_key, semaphore)
             except Exception as e:
                 print(f"Failed to process game {game_key}: {e}")
     else:
@@ -156,15 +179,19 @@ async def main():
             node_label = config["node_label"]
             
             print(f"\n--- Populating GraphRAG for specific {game_label} entities ---")
-            for entity in args.entities:
-                file_path = os.path.join(directory_path, f"{entity}.md")
-                if os.path.exists(file_path):
-                    await process_entity(file_path, entity, game_label, node_label)
-                else:
-                    print(f"File {file_path} not found.")
+            with tqdm(total=len(args.entities), desc=f"Processing {game_label}", unit="entity") as pbar:
+                tasks = []
+                for entity in args.entities:
+                    file_path = os.path.join(directory_path, f"{entity}.md")
+                    if os.path.exists(file_path):
+                        tasks.append(process_entity(file_path, entity, game_label, node_label, semaphore, pbar))
+                    else:
+                        tqdm.write(f"\nFile {file_path} not found.")
+                        pbar.update(1)
+                await asyncio.gather(*tasks)
             export_to_json(args.game)
         else:
-            await process_game(args.game)
+            await process_game(args.game, semaphore)
     
     print("\nNeo4j GraphRAG Population Complete!")
 
