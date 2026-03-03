@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useUSStatesGameStore } from '../stores/gameStore';
-import { useAuthStore } from '../stores/authStore';
 import QuestionInput from '../components/QuestionInput';
 import History from '../components/History';
 import GuessInput from '../components/GuessInput';
@@ -24,7 +23,6 @@ export default function USStatesGamePage() {
     syncGuestData,
     isGuest
   } = useUSStatesGameStore();
-  const { isAuthenticated } = useAuthStore();
   const { t } = useTranslation();
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { LogOut, User as UserIcon, ChevronDown, Menu, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,6 @@ import LanguageSelector from './LanguageSelector';
 export default function Header() {
   const { user, logout, isAuthenticated } = useAuthStore();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
