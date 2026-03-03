@@ -238,9 +238,9 @@ async def ask_question(
             )
             return new_quest
 
-        question_create, question_vector = await wutils.ask_question(
+        question_create = await wutils.ask_question(
             enh_question,
-            day_state,
+            day_wojewodztwo,
             None,
             session,
         )
@@ -249,15 +249,8 @@ async def ask_question(
             question_create
         )
 
-        await add_question_to_qdrant(
-            new_quest,
-            question_vector,
-            filter_key="wojewodztwo_id",
-            filter_value=day_state.wojewodztwo_id,
-            collection_name="wojewodztwa_questions",
-        )
-
         return new_quest
+
 
     state = await WojewodztwodleStateRepository(session).get_state(user, day_state)
 
@@ -294,12 +287,17 @@ async def ask_question(
 
         return new_quest
 
-    question_create, question_vector = await wutils.ask_question(
+    question_create = await wutils.ask_question(
         enh_question,
-        day_state,
+        day_wojewodztwo,
         user,
         session,
     )
+
+    new_quest = await WojewodztwodleQuestionRepository(session).create_question(
+        question_create
+    )
+
 
     new_quest = await WojewodztwodleQuestionRepository(session).create_question(
         question_create

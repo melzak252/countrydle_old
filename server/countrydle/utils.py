@@ -4,14 +4,14 @@ from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Country, CountrydleDay, User
-from qdrant.utils import get_fragments_matching_question
-import qdrant
+from utils.graph import graph_manager
 from schemas.country import DayCountryDisplay
 from schemas.countrydle import QuestionCreate, QuestionEnhanced
 from db.repositories.country import CountryRepository
 
 
 async def enhance_question(question: str) -> QuestionEnhanced:
+
     system_prompt = """
 You are an AI assistant for a game where players guess a country by asking True/False questions. 
 Your task is to:
@@ -131,94 +131,50 @@ async def ask_question(
     session: AsyncSession,
 ) -> QuestionCreate:
 
-    fragments, question_vector = await get_fragments_matching_question(
-        question.question, "country_id", day_country.country_id, "countries", session, limit=qdrant.COUNTRYDLE_CONTEXT_LIMIT
-    )
-    context = "\n[ ... ]\n".join(fragment.text for fragment in fragments)
     country: Country = await CountryRepository(session).get(day_country.country_id)
+    
+    # Use GraphRAG to get the answer
+    answer_text = graph_manager.query_graph(
+        question=question.question,
+        entity_name=country.name,
+        game_key="countries"
+    )
 
+    # We still use an LLM to format the answer into the expected JSON structure
+    # and ensure it's a clean True/False/Null response.
     system_prompt = f"""
-You are an AI assistant in a game where players try to guess a country by asking True/False questions. 
-Your task is to:
-1. Receive a valid True/False question from the player.
-2. Use the provided country and context to answer the question accurately.
+    You are an AI assistant for a game called Countrydle.
+    You have been provided with an answer from a knowledge graph.
+    Your task is to convert this answer into a specific JSON format.
 
-Instructions:
-- Base your answers primarily on the provided context. If the context does not contain enough information, use your general knowledge to provide the most accurate answer possible.
-- If you cannot determine the answer even with general knowledge, set "answer" to null.
-- Incorporate any relevant details from the provided context about the country into your explanations.
-- If the question asks if the country borders/neighbors [X], and the secret country IS [X], answer "true". Treat a country as bordering itself for the purpose of this game.
+    ### Knowledge Graph Answer:
+    {answer_text}
 
-- For any questions about events or information from April 2024 onwards, set "answer" to null.
-- Explanations should be provided before the answer.
-- Answer should be consistent with the explanation.
+    ### Target Country: {country.name}
 
-### Country to Guess: {country.name}
-### Context: 
-[...]
-{context}
-[...]
+    ### Output Format:
+    {{
+        "explanation": "A concise explanation based on the graph answer.",
+        "answer": true | false | null
+    }}
 
-### Output Format
-You are answering the question with your best knowledge.
-Answer with JSON forma and nothing else. Use the specific format:
-{{
-    "explanation": "Your explanation for your answer."
-    "answer": true | false | null,
-}}
-### 
-
-### Examples of answers
-Country: France. Question: Is your country known for its wines?
-{{
-    "explanation": "France is known for its Bordeaux, Champagne and many more!"
-    "answer": true,
-}}
-Country: China. Question: Am I in Europe?
-{{
-    "explanation": "China is located in Asia.",
-    "answer": false
-}}
-Country: Brazil. Question: Is the country's average annual rainfall over 2000 millimeters?
-{{
-    "explanation": "The question is too vague to answer correctly.",
-    "answer": null
-}}
-
-Country: Germany. Question: Is the country a neighbor of Germany?
-{{
-    "explanation": "A country is always considered to be a neighbor of itself.",
-    "answer": true
-}}
-
-Country: Japan. Question: Has the country hosted the 2025 World Expo?
-{{
-  "explanation": "I cannot provide information about events occurring after April 2024.",
-  "answer": null
-}}
-"""
-    question_prompt = f"""Question: {question.question}"""
-
-    prompts = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": question_prompt},
-    ]
+    Rules:
+    - If the graph answer confirms the question, set "answer" to true.
+    - If the graph answer denies the question, set "answer" to false.
+    - If the graph answer is "I don't know" or similar, set "answer" to null.
+    - The explanation should be helpful but brief.
+    """
+    
     model = os.getenv("QUIZ_MODEL")
-
     client = OpenAI()
     response = client.chat.completions.create(
         model=model,
-        messages=prompts,
+        messages=[{"role": "system", "content": system_prompt}],
         response_format={"type": "json_object"},
     )
 
-    answer = response.choices[0].message.content
-
-    try:
-        answer_dict = json.loads(answer)
-    except json.JSONDecodeError:
-        print(answer)
-        raise
+    answer_json = response.choices[0].message.content
+    answer_dict = json.loads(answer_json)
 
     question_create = QuestionCreate(
         user_id=user.id if user else None,
@@ -228,10 +184,11 @@ Country: Japan. Question: Has the country hosted the 2025 World Expo?
         question=question.question,
         answer=answer_dict["answer"],
         explanation=answer_dict["explanation"],
-        context=context,
+        context=answer_text, # Store the graph output as context
     )
 
-    return question_create, question_vector
+    return question_create
+
 
 
 async def give_guess(

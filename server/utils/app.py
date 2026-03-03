@@ -6,11 +6,10 @@ import users.crud as ucrud
 from db import AsyncSessionLocal, get_engine
 
 from db.models import *  # noqa: F403
-from db.base import Base
 from fastapi import FastAPI
-from qdrant import close_qdrant_client, init_qdrant
 from sqlalchemy.ext.asyncio import AsyncEngine
 import utils
+from utils.graph import graph_manager
 
 
 async def init_models(engine: AsyncEngine):
@@ -42,7 +41,12 @@ async def lifespan(app: FastAPI):
 
         async with AsyncSessionLocal() as session:
             await ucrud.add_base_permissions(session)
-            await init_qdrant(session)
+            # Verify Neo4j connection
+            try:
+                graph_manager.graph.query("RETURN 1")
+                print("Neo4j connection verified.", flush=True)
+            except Exception as e:
+                print(f"Warning: Could not connect to Neo4j: {e}", flush=True)
 
         utils.scheduler.start()
 
@@ -58,8 +62,8 @@ async def lifespan(app: FastAPI):
         try:
             logging.info("Shutting down application...")
             utils.scheduler.shutdown(wait=True)
-            close_qdrant_client()
             await engine.dispose()
             logging.info("Application shutdown complete.")
         except Exception as e:
             logging.error(f"Error during shutdown: {e}")
+

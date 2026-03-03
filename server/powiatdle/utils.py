@@ -4,13 +4,13 @@ from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Powiat, PowiatdleDay, User
-from qdrant.utils import get_fragments_matching_question
-import qdrant
+from utils.graph import graph_manager
 from schemas.powiatdle import PowiatQuestionCreate, PowiatQuestionEnhanced
 from db.repositories.powiatdle import PowiatRepository
 
 
 async def enhance_question(question: str) -> PowiatQuestionEnhanced:
+
     system_prompt = """
 Jesteś asystentem AI w grze, w której gracze odgadują polski powiat, zadając pytania Tak/Nie.
 Twoim zadaniem jest:
@@ -103,62 +103,50 @@ async def ask_question(
     session: AsyncSession,
 ) -> PowiatQuestionCreate:
 
-    fragments, question_vector = await get_fragments_matching_question(
-        question.question, "powiat_id", day_powiat.powiat_id, "powiaty", session, limit=qdrant.POWIATDLE_CONTEXT_LIMIT
-    )
-    context = "\n[ ... ]\n".join(fragment.text for fragment in fragments)
     powiat: Powiat = await PowiatRepository(session).get(day_powiat.powiat_id)
+    
+    # Use GraphRAG to get the answer
+    answer_text = graph_manager.query_graph(
+        question=question.question,
+        entity_name=powiat.nazwa,
+        game_key="powiaty"
+    )
 
+    # We still use an LLM to format the answer into the expected JSON structure
     system_prompt = f"""
-Jesteś asystentem AI w grze, w której gracze próbują odgadnąć polski powiat, zadając pytania Tak/Nie.
-Twoim zadaniem jest:
-1. Otrzymanie poprawnego pytania Tak/Nie od gracza.
-2. Użycie podanego powiatu i kontekstu, aby dokładnie odpowiedzieć na pytanie.
+    Jesteś asystentem AI dla gry o nazwie Powiatdle.
+    Otrzymałeś odpowiedź z grafu wiedzy.
+    Twoim zadaniem jest przekonwertowanie tej odpowiedzi na określony format JSON.
 
-Instrukcje:
-- Opieraj swoje odpowiedzi głównie na dostarczonym kontekście. Jeśli kontekst nie zawiera wystarczających informacji, użyj swojej wiedzy ogólnej, aby udzielić jak najdokładniejszej odpowiedzi.
-- Jeśli nie możesz ustalić odpowiedzi nawet przy użyciu wiedzy ogólnej, ustaw "answer" na null.
-- Uwzględnij wszelkie istotne szczegóły z dostarczonego kontekstu dotyczące powiatu w swoich wyjaśnieniach.
-- Jeśli pytanie dotyczy tego, czy powiat sąsiaduje z [X], a powiatem DO ODGADNIĘCIA JEST [X], odpowiedz "true". Traktuj powiat jako sąsiadujący sam ze sobą na potrzeby tej gry.
-- Wyjaśnienia powinny być podane przed odpowiedzią.
-- Odpowiedź powinna być spójna z wyjaśnieniem.
-- Zawsze odpowiadaj w języku polskim.
+    ### Odpowiedź z grafu wiedzy:
+    {answer_text}
 
-### Powiat do odgadnięcia: {powiat.nazwa}
-### Kontekst: 
-[...]
-{context}
-[...]
+    ### Docelowy Powiat: {powiat.nazwa}
 
-### Format wyjściowy
-Odpowiedz w formacie JSON i niczym więcej. Użyj określonego formatu:
-{{
-    "explanation": "Twoje wyjaśnienie odpowiedzi.",
-    "answer": true | false | null
-}}
-"""
-    question_prompt = f"""Question: {question.question}"""
+    ### Format wyjściowy:
+    {{
+        "explanation": "Zwięzłe wyjaśnienie oparte na odpowiedzi z grafu.",
+        "answer": true | false | null
+    }}
 
-    prompts = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": question_prompt},
-    ]
+    Zasady:
+    - Jeśli odpowiedź z grafu potwierdza pytanie, ustaw "answer" na true.
+    - Jeśli odpowiedź z grafu zaprzecza pytaniu, ustaw "answer" na false.
+    - Jeśli odpowiedź z grafu to "Nie wiem" lub podobne, ustaw "answer" na null.
+    - Wyjaśnienie powinno być pomocne, ale krótkie.
+    - Zawsze odpowiadaj w języku polskim.
+    """
+    
     model = os.getenv("QUIZ_MODEL")
-
     client = OpenAI()
     response = client.chat.completions.create(
         model=model,
-        messages=prompts,
+        messages=[{"role": "system", "content": system_prompt}],
         response_format={"type": "json_object"},
     )
 
-    answer = response.choices[0].message.content
-
-    try:
-        answer_dict = json.loads(answer)
-    except json.JSONDecodeError:
-        print(answer)
-        raise
+    answer_json = response.choices[0].message.content
+    answer_dict = json.loads(answer_json)
 
     question_create = PowiatQuestionCreate(
         user_id=user.id if user else None,
@@ -168,7 +156,8 @@ Odpowiedz w formacie JSON i niczym więcej. Użyj określonego formatu:
         question=question.question,
         answer=answer_dict["answer"],
         explanation=answer_dict["explanation"],
-        context=context,
+        context=answer_text,
     )
 
-    return question_create, question_vector
+    return question_create
+

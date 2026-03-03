@@ -19,23 +19,29 @@ services:
       timeout: 5s
       retries: 5
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
     networks:
       - countrydle
     ports:
-      - 6351:6333
-      - 6352:6334 
-    expose:
-      - 6333
-      - 6334
-      - 6335
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=${NEO4J_PLUGINS}
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*,graph-data-science.*
+      - NEO4J_dbms_security_procedures_allowlist=apoc.*,graph-data-science.*
     volumes:
-      - qdrant_snapshots:/qdrant/snapshots
-      - ./qdrant_data:/qdrant/storage
-    depends_on:
-      - db
+      - ./neo4j_data:/data
+      - ./neo4j_logs:/logs
+      - ./neo4j_import:/var/lib/neo4j/import
+      - ./neo4j_plugins:/plugins
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   backend:
     container_name: server
@@ -48,8 +54,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      qdrant:
-        condition: service_started
+      neo4j:
+        condition: service_healthy
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - DATABASE_URL=${DATABASE_URL}
@@ -57,8 +63,9 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
-      - QDRANT_HOST=${QDRANT_HOST}
-      - QDRANT_PORT=${QDRANT_PORT}
+      - NEO4J_URI=${NEO4J_URI}
+      - NEO4J_USERNAME=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       - EMBEDDING_SIZE=${EMBEDDING_SIZE}
       - EMAIL_USERNAME=${EMAIL_USERNAME}
@@ -86,7 +93,7 @@ services:
       - backend
 
 volumes:
-  qdrant_snapshots:
+  postgres_data:
 
 networks:
   countrydle:

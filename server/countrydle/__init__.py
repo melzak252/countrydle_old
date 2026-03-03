@@ -31,7 +31,6 @@ from db.repositories.guess import (
 from db.repositories.question import (
     CountrydleQuestionsRepository,
 )
-from qdrant.utils import add_question_to_qdrant
 from db.repositories.country import CountryRepository
 from users.utils import get_current_or_guest_user, get_current_user
 
@@ -292,7 +291,7 @@ async def ask_question(
             )
             return InvalidQuestionDisplay.model_validate(new_quest)
 
-        question_create, question_vector = await gutils.ask_question(
+        question_create = await gutils.ask_question(
             question=enh_question,
             day_country=daily_country,
             user=None,
@@ -301,14 +300,6 @@ async def ask_question(
 
         new_quest = await CountrydleQuestionsRepository(session).create_question(
             question_create
-        )
-
-        await add_question_to_qdrant(
-            new_quest,
-            question_vector,
-            filter_key="country_id",
-            filter_value=daily_country.country_id,
-            collection_name="countries_questions",
         )
 
         return QuestionDisplay.model_validate(new_quest)
@@ -359,7 +350,7 @@ async def ask_question(
 
         return InvalidQuestionDisplay.model_validate(new_quest)
 
-    question_create, question_vector = await gutils.ask_question(
+    question_create = await gutils.ask_question(
         question=enh_question,
         day_country=daily_country,
         user=user,
@@ -368,14 +359,6 @@ async def ask_question(
 
     new_quest = await CountrydleQuestionsRepository(session).create_question(
         question_create
-    )
-
-    await add_question_to_qdrant(
-        new_quest,
-        question_vector,
-        filter_key="country_id",
-        filter_value=daily_country.country_id,
-        collection_name="countries_questions",
     )
 
     # Update Logic State

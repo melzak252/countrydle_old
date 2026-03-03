@@ -9,14 +9,20 @@ venv
 node_modules
 
 data/
+# Databases
 postgres_data*/
 postgres_test_data/
 qdrant_data/
+qdrant_data_*/
+neo4j_data/
+neo4j_logs/
+neo4j_import/
+neo4j_plugins/
+
+# Graph Backups
+*_graph_backup.json
+
 backups/
 
-docker-compose_dev.yml
-
-qdrant_data/
-qdrant_data_*/
 
 databases

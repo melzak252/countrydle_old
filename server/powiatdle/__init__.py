@@ -234,7 +234,7 @@ async def ask_question(
             )
             return new_quest
 
-        question_create, question_vector = await putils.ask_question(
+        question_create = await putils.ask_question(
             enh_question,
             day_powiat,
             None,
@@ -243,14 +243,6 @@ async def ask_question(
 
         new_quest = await PowiatdleQuestionRepository(session).create_question(
             question_create
-        )
-
-        await add_question_to_qdrant(
-            new_quest,
-            question_vector,
-            filter_key="powiat_id",
-            filter_value=day_powiat.powiat_id,
-            collection_name="powiaty_questions",
         )
 
         return new_quest
@@ -290,7 +282,7 @@ async def ask_question(
 
         return new_quest
 
-    question_create, question_vector = await putils.ask_question(
+    question_create = await putils.ask_question(
         enh_question,
         day_powiat,
         user,
@@ -299,14 +291,6 @@ async def ask_question(
 
     new_quest = await PowiatdleQuestionRepository(session).create_question(
         question_create
-    )
-
-    await add_question_to_qdrant(
-        new_quest,
-        question_vector,
-        filter_key="powiat_id",
-        filter_value=day_powiat.powiat_id,
-        collection_name="powiaty_questions",
     )
 
     # Update state

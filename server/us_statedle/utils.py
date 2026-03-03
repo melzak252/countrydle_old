@@ -4,13 +4,13 @@ from openai import OpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import USState, USStatedleDay, User
-from qdrant.utils import get_fragments_matching_question
-import qdrant
+from utils.graph import graph_manager
 from schemas.us_statedle import USStateQuestionCreate, USStateQuestionEnhanced
 from db.repositories.us_state import USStateRepository
 
 
 async def enhance_question(question: str) -> USStateQuestionEnhanced:
+
     system_prompt = """
 You are an AI assistant for a game where players guess a US State by asking True/False questions. 
 Your task is to:
@@ -125,61 +125,49 @@ async def ask_question(
     session: AsyncSession,
 ) -> USStateQuestionCreate:
 
-    fragments, question_vector = await get_fragments_matching_question(
-        question.question, "us_state_id", day_state.us_state_id, "us_states", session, limit=qdrant.US_STATEDLE_CONTEXT_LIMIT
-    )
-    context = "\n[ ... ]\n".join(fragment.text for fragment in fragments)
     state: USState = await USStateRepository(session).get(day_state.us_state_id)
+    
+    # Use GraphRAG to get the answer
+    answer_text = graph_manager.query_graph(
+        question=question.question,
+        entity_name=state.name,
+        game_key="us_states"
+    )
 
+    # We still use an LLM to format the answer into the expected JSON structure
     system_prompt = f"""
-You are an AI assistant in a game where players try to guess a US State by asking True/False questions. 
-Your task is to:
-1. Receive a valid True/False question from the player.
-2. Use the provided state and context to answer the question accurately.
+    You are an AI assistant for a game called USStatedle.
+    You have been provided with an answer from a knowledge graph.
+    Your task is to convert this answer into a specific JSON format.
 
-Instructions:
-- Base your answers primarily on the provided context. If the context does not contain enough information, use your general knowledge to provide the most accurate answer possible.
-- If you cannot determine the answer even with general knowledge, set "answer" to null.
-- Incorporate any relevant details from the provided context about the state into your explanations.
-- If the question asks if the state borders/neighbors [X], and the secret state IS [X], answer "true". Treat a state as bordering itself for the purpose of this game.
-- Explanations should be provided before the answer.
-- Answer should be consistent with the explanation.
+    ### Knowledge Graph Answer:
+    {answer_text}
 
-### State to Guess: {state.name}
-### Context: 
-[...]
-{context}
-[...]
+    ### Target State: {state.name}
 
-### Output Format
-Answer with JSON format and nothing else. Use the specific format:
-{{
-    "explanation": "Your explanation for your answer.",
-    "answer": true | false | null
-}}
-"""
-    question_prompt = f"""Question: {question.question}"""
+    ### Output Format:
+    {{
+        "explanation": "A concise explanation based on the graph answer.",
+        "answer": true | false | null
+    }}
 
-    prompts = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": question_prompt},
-    ]
+    Rules:
+    - If the graph answer confirms the question, set "answer" to true.
+    - If the graph answer denies the question, set "answer" to false.
+    - If the graph answer is "I don't know" or similar, set "answer" to null.
+    - The explanation should be helpful but brief.
+    """
+    
     model = os.getenv("QUIZ_MODEL")
-
     client = OpenAI()
     response = client.chat.completions.create(
         model=model,
-        messages=prompts,
+        messages=[{"role": "system", "content": system_prompt}],
         response_format={"type": "json_object"},
     )
 
-    answer = response.choices[0].message.content
-
-    try:
-        answer_dict = json.loads(answer)
-    except json.JSONDecodeError:
-        print(answer)
-        raise
+    answer_json = response.choices[0].message.content
+    answer_dict = json.loads(answer_json)
 
     question_create = USStateQuestionCreate(
         user_id=user.id if user else None,
@@ -189,7 +177,8 @@ Answer with JSON format and nothing else. Use the specific format:
         question=question.question,
         answer=answer_dict["answer"],
         explanation=answer_dict["explanation"],
-        context=context,
+        context=answer_text,
     )
 
-    return question_create, question_vector
+    return question_create
+

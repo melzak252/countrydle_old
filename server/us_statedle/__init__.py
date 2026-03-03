@@ -234,7 +234,7 @@ async def ask_question(
             )
             return new_quest
 
-        question_create, question_vector = await uutils.ask_question(
+        question_create = await uutils.ask_question(
             enh_question,
             day_state,
             None,
@@ -245,15 +245,8 @@ async def ask_question(
             question_create
         )
 
-        await add_question_to_qdrant(
-            new_quest,
-            question_vector,
-            filter_key="us_state_id",
-            filter_value=day_state.us_state_id,
-            collection_name="us_states_questions",
-        )
-
         return new_quest
+
 
     state = await USStatedleStateRepository(session).get_state(user, day_state)
 
@@ -290,7 +283,7 @@ async def ask_question(
 
         return new_quest
 
-    question_create, question_vector = await uutils.ask_question(
+    question_create = await uutils.ask_question(
         enh_question,
         day_state,
         user,
@@ -299,14 +292,6 @@ async def ask_question(
 
     new_quest = await USStatedleQuestionRepository(session).create_question(
         question_create
-    )
-
-    await add_question_to_qdrant(
-        new_quest,
-        question_vector,
-        filter_key="us_state_id",
-        filter_value=day_state.us_state_id,
-        collection_name="us_states_questions",
     )
 
     # Update state

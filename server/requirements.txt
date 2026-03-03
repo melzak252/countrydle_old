@@ -1,3 +1,10 @@
+langchain-neo4j
+neo4j
+langchain-openai
+langchain-community
+langchain-experimental
+unstructured
+markdown
 fastapi
 uvicorn[standard]
 asyncpg
