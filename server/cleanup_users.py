@@ -14,7 +14,7 @@ async def main():
     try:
         engine = create_async_engine(DB_URL)
         async with engine.connect() as conn:
-            patterns = ['test_%', 'pytest_%', 'guess_c_%', 'ask_q_%']
+            patterns = ['test_%', 'pytest_%', 'guess_c_%', 'ask_q_%', 'guest_%']
             
             print("Cleaning up test users...")
             total_deleted = 0
