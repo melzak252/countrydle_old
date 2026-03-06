@@ -41,7 +41,7 @@ from utils.email import fm_noreply
 
 app = FastAPI(lifespan=lifespan)
 
-SERVER_VERSION = "1.0.2"
+SERVER_VERSION = "1.0.3"
 
 app.add_middleware(
     CORSMiddleware,

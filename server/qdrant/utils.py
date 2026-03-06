@@ -85,7 +85,7 @@ async def get_fragments_matching_question(
     filter_value: int,
     collection_name: str,
     session: AsyncSession,
-    limit: int = 3,
+    limit: int = 1,
 ) -> Tuple[list[Fragment], List[float]]:
     query = question
     query_vector = get_embedding(query, qdrant.EMBEDDING_MODEL)
@@ -101,11 +101,12 @@ async def get_fragments_matching_question(
     if not points:
         return [], query_vector
 
-    # Collect all IDs to fetch (original and next)
+    # Collect all IDs to fetch (original, previous and next)
     ids_to_fetch = set()
     for point in points:
         point_id = int(point.id)
         ids_to_fetch.add(point_id)
+        ids_to_fetch.add(point_id - 1)
         ids_to_fetch.add(point_id + 1)
 
     # Fetch all these points from Qdrant
@@ -128,6 +129,7 @@ async def get_fragments_matching_question(
                 fragments.append(Fragment(text=text))
 
     return fragments, query_vector
+
 
 
 async def add_question_to_qdrant(

@@ -60,9 +60,12 @@ class WojewodztwoQuestionCreate(BaseModel):
     answer: Optional[bool]
     explanation: str
     context: Optional[str]
+    intent: Optional[str] = None
+    required_info: Optional[str] = None
 
 
 class WojewodztwoQuestionDisplay(BaseModel):
+
     id: int
     original_question: str
     question: Optional[str]
@@ -79,6 +82,9 @@ class WojewodztwoQuestionEnhanced(BaseModel):
     valid: bool
     question: Optional[str] = None
     explanation: Optional[str] = None
+    intent: Optional[str] = None
+    required_info: Optional[str] = None
+
 
 
 class WojewodztwodleStateResponse(BaseModel):

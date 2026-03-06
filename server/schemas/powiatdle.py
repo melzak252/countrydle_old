@@ -60,9 +60,12 @@ class PowiatQuestionCreate(BaseModel):
     answer: Optional[bool]
     explanation: str
     context: Optional[str]
+    intent: Optional[str] = None
+    required_info: Optional[str] = None
 
 
 class PowiatQuestionDisplay(BaseModel):
+
     id: int
     original_question: str
     question: Optional[str]
@@ -79,6 +82,9 @@ class PowiatQuestionEnhanced(BaseModel):
     valid: bool
     question: Optional[str] = None
     explanation: Optional[str] = None
+    intent: Optional[str] = None
+    required_info: Optional[str] = None
+
 
 
 class PowiatdleStateResponse(BaseModel):

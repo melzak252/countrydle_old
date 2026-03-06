@@ -61,9 +61,12 @@ class USStateQuestionCreate(BaseModel):
     answer: Optional[bool]
     explanation: str
     context: Optional[str]
+    intent: Optional[str] = None
+    required_info: Optional[str] = None
 
 
 class USStateQuestionDisplay(BaseModel):
+
     id: int
     original_question: str
     question: Optional[str]
@@ -80,6 +83,9 @@ class USStateQuestionEnhanced(BaseModel):
     valid: bool
     question: Optional[str] = None
     explanation: Optional[str] = None
+    intent: Optional[str] = None
+    required_info: Optional[str] = None
+
 
 
 class USStatedleStateResponse(BaseModel):

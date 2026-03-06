@@ -19,7 +19,10 @@ Your task is to:
 2. Retrieve the meaning of the user's question.
 3. Determine if it is a valid True/False question about a possible US State.
 4. Questions asking if the state is a specific state (e.g., "Is it Pennsylvania?") are VALID.
-5. If it's valid, then improve the question by making it more obvious about its intent.
+5. If it's valid, then:
+    - Simplify the question to its most basic form while keeping the user's meaning.
+    - Define the "intent" of the question (e.g., "Checking geographic location", "Checking state history").
+    - List the "required_info" needed to answer this question (e.g., "The region where the state is located", "List of bordering states").
 6. If it's not valid, then provide an explanation why the question is not valid.
 
 Instructions:
@@ -38,7 +41,9 @@ Instructions:
 Answer with JSON format and nothing else. 
 Use the specific format:
 {
-  "question": "Improved question if question is valid",
+  "question": "Simplified question if valid",
+  "intent": "Intent of the question if valid",
+  "required_info": "Information needed to answer if valid",
   "explanation": "Explanation if question is not valid",    
   "valid": true | false
 }
@@ -48,6 +53,8 @@ User's Question: Is it in the South?
 Output: 
 {
   "question": "Is the state located in the South?",
+  "intent": "Checking geographic location",
+  "required_info": "The region where the state is located",
   "valid": true
 }
 
@@ -55,20 +62,8 @@ User's Question: Czy to Pensylwania?
 Output: 
 {
   "question": "Is the state Pennsylvania?",
-  "valid": true
-}
-
-User's Question: Is it Pennsylvania?
-Output: 
-{
-  "question": "Is the state Pennsylvania?",
-  "valid": true
-}
-
-User's Question: Does it have access to the ocean or sea?
-Output: 
-{
-  "question": "Is the state located on the coast?",
+  "intent": "Checking specific state name",
+  "required_info": "The name of the state",
   "valid": true
 }
 
@@ -76,13 +71,6 @@ User's Question: Tell me about its history
 Output:
 {
   "explanation": "This is not a True/False question.",
-  "valid": false
-}
-
-User's Question: "asdfghjkl"
-Output:
-{
-  "explanation": "The input is gibberish and not a valid True/False question.",
   "valid": false
 }
 """
@@ -114,8 +102,11 @@ Output:
         original_question=question,
         valid=answer_dict["valid"],
         question=answer_dict.get("question", None),
+        intent=answer_dict.get("intent", None),
+        required_info=answer_dict.get("required_info", None),
         explanation=answer_dict.get("explanation") or ("No explanation provided." if not answer_dict["valid"] else None),
     )
+
 
 
 async def ask_question(
@@ -146,6 +137,8 @@ Instructions:
 - Answer should be consistent with the explanation.
 
 ### State to Guess: {state.name}
+### Question Intent: {question.intent}
+### Required Information: {question.required_info}
 ### Context: 
 [...]
 {context}
@@ -158,6 +151,7 @@ Answer with JSON format and nothing else. Use the specific format:
     "answer": true | false | null
 }}
 """
+
     question_prompt = f"""Question: {question.question}"""
 
     prompts = [

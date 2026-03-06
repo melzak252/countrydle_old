@@ -16,8 +16,11 @@ class QuestionEnhanced(BaseModel):
     question: str | None
     valid: bool
     explanation: str | None
+    intent: str | None = None
+    required_info: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 
 class QuestionCreate(QuestionEnhanced):

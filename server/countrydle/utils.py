@@ -20,7 +20,10 @@ Your task is to:
 2. Retrieve the meaning of the user's question.
 3. Determine if it is a valid True/False question about possible country.
 4. Questions asking if the country is a specific country (e.g., "Is it Poland?") are VALID.
-5. If It's valid then improve the question by make it more obvious about its intent.
+5. If It's valid then:
+    - Simplify the question to its most basic form while keeping the user's meaning.
+    - Define the "intent" of the question (e.g., "Checking geographic location", "Checking membership in an organization").
+    - List the "required_info" needed to answer this question (e.g., "List of continents the country is in", "List of organizations the country belongs to").
 6. If It's not valid then provide an explanation why the question is not valid.
 
 Instructions:
@@ -40,7 +43,9 @@ Instructions:
 Answer with JSON format and nothing else. 
 Use the specific format:
 {
-  "question": "Improved question if question is valid",
+  "question": "Simplified question if valid",
+  "intent": "Intent of the question if valid",
+  "required_info": "Information needed to answer if valid",
   "explanation": "Explanation if question is not valid",    
   "valid": true | false
 }
@@ -50,6 +55,8 @@ User's Question: Is it in Europe?
 Output: 
 {
   "question": "Is the country located in Europe?",
+  "intent": "Checking geographic location",
+  "required_info": "The continent(s) where the country is located",
   "valid": true
 }
 
@@ -57,6 +64,8 @@ User's Question: in Europe
 Output: 
 {
   "question": "Is the country located in Europe?",
+  "intent": "Checking geographic location",
+  "required_info": "The continent(s) where the country is located",
   "valid": true
 }
 
@@ -64,6 +73,8 @@ User's Question: Czy w Azji?
 Output: 
 {
   "question": "Is the country located in Asia?",
+  "intent": "Checking geographic location",
+  "required_info": "The continent(s) where the country is located",
   "valid": true
 }
 
@@ -71,24 +82,6 @@ User's Question: Tell me about its history
 Output:
 {
   "explanation": "This is not a True/False question.",
-  "valid": false
-}
-
-User's Question: Is it seychelles?
-{
-  "question": "Is the country Seychelles?",
-  "valid": true,
-}
-
-User's Question: Is this island/s country
-{
-  "question": "Is the country an island nation?",
-  "valid": true
-}
-
-User's Question: "asdfghjkl"
-{
-  "explanation": "The input is gibberish and not a valid True/False question.",
   "valid": false
 }
 """
@@ -107,6 +100,24 @@ User's Question: "asdfghjkl"
         messages=prompts,
         response_format={"type": "json_object"},
     )
+
+    answer = response.choices[0].message.content
+
+    try:
+        answer_dict: dict = json.loads(answer)
+    except json.JSONDecodeError:
+        print(answer)
+        raise
+
+    return QuestionEnhanced(
+        original_question=question,
+        valid=answer_dict["valid"],
+        question=answer_dict.get("question", None),
+        intent=answer_dict.get("intent", None),
+        required_info=answer_dict.get("required_info", None),
+        explanation=answer_dict.get("explanation") or ("No explanation provided." if not answer_dict["valid"] else None),
+    )
+
 
     answer = response.choices[0].message.content
 
@@ -154,6 +165,8 @@ Instructions:
 - Answer should be consistent with the explanation.
 
 ### Country to Guess: {country.name}
+### Question Intent: {question.intent}
+### Required Information: {question.required_info}
 ### Context: 
 [...]
 {context}
@@ -167,6 +180,7 @@ Answer with JSON forma and nothing else. Use the specific format:
     "answer": true | false | null,
 }}
 ### 
+
 
 ### Examples of answers
 Country: France. Question: Is your country known for its wines?

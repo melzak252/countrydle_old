@@ -19,7 +19,10 @@ Twoim zadaniem jest:
 2. Zrozumienie znaczenia pytania użytkownika.
 3. Określenie, czy jest to poprawne pytanie Tak/Nie dotyczące możliwego polskiego powiatu.
 4. Pytania o to, czy powiat jest konkretnym powiatem (np. "Czy to powiat krakowski?") są POPRAWNE.
-5. Jeśli pytanie jest poprawne, ulepsz je, aby jego intencja była bardziej oczywista.
+5. Jeśli pytanie jest poprawne, to:
+    - Uprość pytanie do jego najbardziej podstawowej formy, zachowując znaczenie użytkownika.
+    - Zdefiniuj "intencję" (intent) pytania (np. "Sprawdzanie lokalizacji geograficznej", "Sprawdzanie przynależności do województwa").
+    - Wymień "wymagane informacje" (required_info) potrzebne do odpowiedzi na to pytanie (np. "Województwo, w którym znajduje się powiat", "Lista powiatów sąsiadujących").
 6. Jeśli pytanie nie jest poprawne, podaj wyjaśnienie, dlaczego nie jest ono poprawne.
 
 Instrukcje:
@@ -37,7 +40,9 @@ Instrukcje:
 Odpowiedz w formacie JSON i niczym więcej.
 Użyj określonego formatu:
 {
-  "question": "Ulepszone pytanie, jeśli jest poprawne",
+  "question": "Uproszczone pytanie, jeśli jest poprawne",
+  "intent": "Intencja pytania, jeśli jest poprawne",
+  "required_info": "Informacje potrzebne do odpowiedzi, jeśli jest poprawne",
   "explanation": "Wyjaśnienie, jeśli pytanie nie jest poprawne",
   "valid": true | false
 }
@@ -47,6 +52,8 @@ Pytanie użytkownika: Czy jest na południu?
 Wyjście:
 {
   "question": "Czy powiat znajduje się na południu?",
+  "intent": "Sprawdzanie lokalizacji geograficznej",
+  "required_info": "Położenie geograficzne powiatu w Polsce",
   "valid": true
 }
 
@@ -54,6 +61,8 @@ Pytanie użytkownika: Czy to powiat krakowski?
 Wyjście:
 {
   "question": "Czy powiat to powiat krakowski?",
+  "intent": "Sprawdzanie konkretnej nazwy powiatu",
+  "required_info": "Nazwa powiatu",
   "valid": true
 }
 
@@ -92,8 +101,11 @@ Wyjście:
         original_question=question,
         valid=answer_dict["valid"],
         question=answer_dict.get("question", None),
+        intent=answer_dict.get("intent", None),
+        required_info=answer_dict.get("required_info", None),
         explanation=answer_dict.get("explanation") or ("Brak wyjaśnienia." if not answer_dict["valid"] else None),
     )
+
 
 
 async def ask_question(
@@ -125,6 +137,8 @@ Instrukcje:
 - Zawsze odpowiadaj w języku polskim.
 
 ### Powiat do odgadnięcia: {powiat.nazwa}
+### Intencja pytania: {question.intent}
+### Wymagane informacje: {question.required_info}
 ### Kontekst: 
 [...]
 {context}
@@ -137,6 +151,7 @@ Odpowiedz w formacie JSON i niczym więcej. Użyj określonego formatu:
     "answer": true | false | null
 }}
 """
+
     question_prompt = f"""Question: {question.question}"""
 
     prompts = [
