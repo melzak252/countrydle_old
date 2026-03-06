@@ -19,11 +19,21 @@ def extract_data_from_md(content, entity_type):
     Extract:
     1. Basic properties: capital, population (INT64), area (DOUBLE).
     2. Neighbors: A list of names of other {entity_type}s that border this one.
-    3. Concepts: A list of related entities like Continents, Organizations (EU, NATO, G7), Currencies, Languages, Religions, Climates.
+    3. Concepts: A list of related entities like:
+       - Continents, Regions
+       - Organizations (EU, NATO, G7, UN, etc.)
+       - Currencies (Official and used)
+       - Languages (Official and spoken)
+       - Religions
+       - Climates
+       - Major Rivers, Lakes, Mountains
+       - Famous Landmarks
+       - Historical Events/Periods
+       
        For each concept, provide:
-       - name: The name of the concept (e.g., "Europe", "Euro", "English").
-       - category: The category (e.g., "Continent", "Currency", "Language").
-       - relationship: How it relates (e.g., "Located In", "Uses Currency", "Official Language").
+       - name: The name of the concept (e.g., "Europe", "Euro", "English", "Amazon River").
+       - category: The category (e.g., "Continent", "Currency", "Language", "River", "Mountain").
+       - relationship: How it relates (e.g., "Located In", "Uses Currency", "Official Language", "Flows Through", "Highest Point").
 
     Output format: JSON
     {{

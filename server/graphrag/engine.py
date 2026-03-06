@@ -30,7 +30,8 @@ class GraphRAGEngine:
         ### Output Format (JSON):
         {
             "simplified_question": "Atomic version of the question",
-            "required_concepts": ["List of concept names to look up in the graph"],
+            "required_concepts": ["List of specific concept names mentioned, e.g., 'Euro', 'Poland', 'NATO'"],
+            "required_categories": ["List of categories to fetch all related items for, e.g., 'Currency', 'Language', 'River', 'Continent'"],
             "required_properties": ["population", "area", "capital", etc.],
             "relationship_types": ["BORDERS", "HAS_CONCEPT"],
             "valid": true/false,
@@ -38,14 +39,15 @@ class GraphRAGEngine:
         }
 
         ### Examples:
-        User: "Is it a G7 member in Europe?"
+        User: "Does it use the Euro?"
         Output: {
-            "simplified_question": "Is the country a member of the G7 and located in Europe?",
-            "required_concepts": ["G7", "Europe"],
+            "simplified_question": "Does the country use the Euro currency?",
+            "required_concepts": ["Euro"],
+            "required_categories": ["Currency"],
             "required_properties": [],
             "relationship_types": ["HAS_CONCEPT"],
             "valid": true,
-            "explanation": "Checking membership in G7 and geographic location in Europe."
+            "explanation": "Checking if Euro is a currency of the country."
         }
 
         User: "Does it border Poland and use the Euro?"
@@ -98,7 +100,18 @@ class GraphRAGEngine:
                     row = res.get_next()
                     context_parts.append(f"Fact: {country_name} has relationship '{row[0]}' with {row[1]}.")
 
-            # 3. Get all neighbors if BORDERS is in plan but no specific country mentioned
+            # 3. Get all concepts for required categories (e.g., fetch ALL currencies if question is about currency)
+            for category in plan.get("required_categories", []):
+                cat_query = f"MATCH (c:Country {{name: '{country_name}'}})-[r:HAS_CONCEPT]->(con:Concept) WHERE con.category = '{category}' RETURN r.relationship, con.name"
+                res = self.conn.execute(cat_query)
+                cat_facts = []
+                while res.has_next():
+                    row = res.get_next()
+                    cat_facts.append(f"{row[0]}: {row[1]}")
+                if cat_facts:
+                    context_parts.append(f"Category '{category}' facts for {country_name}: {', '.join(cat_facts)}")
+
+            # 4. Get all neighbors if BORDERS is in plan but no specific country mentioned
             if "BORDERS" in plan.get("relationship_types", []) and not plan.get("required_concepts"):
                 neighbors_query = f"MATCH (c:Country {{name: '{country_name}'}})-[:BORDERS]-(n:Country) RETURN n.name"
                 res = self.conn.execute(neighbors_query)
