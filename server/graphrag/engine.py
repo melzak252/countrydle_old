@@ -17,20 +17,45 @@ class GraphRAGEngine:
         Enhance the question and declare what needs to be checked in the graph.
         """
         system_prompt = """
-        You are a strategic planner for a geography GraphRAG system.
-        Your task is to:
-        1. Analyze the user's question about a mystery country.
-        2. Convert it into basic terms.
-        3. Declare exactly what entities and relationships need to be checked in the graph database to answer this question.
-        
-        Output format: JSON
+        You are the 'Question Analyzer' for a geography GraphRAG system.
+        Your goal is to decompose a user's question into its most atomic, searchable components.
+
+        ### Task:
+        1. **Simplify**: Rewrite the question into its most basic, atomic form (e.g., "Is it in the EU?" -> "Is the country a member of the European Union?").
+        2. **Identify Concepts**: List the specific 'Concepts' (Organizations, Continents, Regions, Currencies, Languages, etc.) that must be retrieved from the graph to answer this.
+        3. **Identify Properties**: List any direct country properties (population, area, capital) that are relevant.
+        4. **Identify Relationships**: Determine the type of relationship to look for (e.g., "Borders", "Member Of", "Located In").
+        5. **Validate**: Check if it's a valid True/False question about a country.
+
+        ### Output Format (JSON):
         {
-            "basic_terms": "The question in simple English",
-            "entities_to_check": ["List of entity types or names"],
-            "relationships_to_check": ["List of relationship types"],
-            "cypher_query": "A Cypher query to extract relevant context (optional but helpful)",
+            "simplified_question": "Atomic version of the question",
+            "required_concepts": ["List of concept names to look up in the graph"],
+            "required_properties": ["population", "area", "capital", etc.],
+            "relationship_types": ["BORDERS", "HAS_CONCEPT"],
             "valid": true/false,
-            "explanation": "If invalid, why?"
+            "explanation": "If invalid, why? If valid, brief reasoning."
+        }
+
+        ### Examples:
+        User: "Is it a G7 member in Europe?"
+        Output: {
+            "simplified_question": "Is the country a member of the G7 and located in Europe?",
+            "required_concepts": ["G7", "Europe"],
+            "required_properties": [],
+            "relationship_types": ["HAS_CONCEPT"],
+            "valid": true,
+            "explanation": "Checking membership in G7 and geographic location in Europe."
+        }
+
+        User: "Does it border Poland and use the Euro?"
+        Output: {
+            "simplified_question": "Does the country border Poland and use the Euro currency?",
+            "required_concepts": ["Poland", "Euro"],
+            "required_properties": [],
+            "relationship_types": ["BORDERS", "HAS_CONCEPT"],
+            "valid": true,
+            "explanation": "Checking physical border with Poland and currency concept."
         }
         """
         
@@ -47,25 +72,43 @@ class GraphRAGEngine:
 
     async def extract_context(self, plan: dict, country_name: str) -> str:
         """
-        Execute queries against KuzuDB to get context.
+        Execute queries against KuzuDB to get context based on the plan.
         """
-        # This is a placeholder. In a real implementation, we would use the cypher_query
-        # or build one based on entities_to_check.
-        # For now, let's assume we query for the specific country's properties.
+        context_parts = []
         
         try:
-            # Example query: MATCH (c:Country {name: $name}) RETURN c.*
-            # Note: Kuzu uses Cypher.
-            query = f"MATCH (c:Country) WHERE c.name = '{country_name}' RETURN c.*"
-            result = self.conn.execute(query)
-            
-            context_parts = []
-            while result.has_next():
-                row = result.get_next()
-                # Format row as context string
-                context_parts.append(str(row))
-            
-            return "\n".join(context_parts) if context_parts else "No specific graph context found."
+            # 1. Get Country Properties
+            prop_query = f"MATCH (c:Country {{name: '{country_name}'}}) RETURN c.*"
+            res = self.conn.execute(prop_query)
+            if res.has_next():
+                context_parts.append(f"Country Properties: {res.get_next()}")
+
+            # 2. Get Specific Concepts from Plan
+            for concept in plan.get("required_concepts", []):
+                # Check if it's a border relationship (Country to Country)
+                border_query = f"MATCH (a:Country {{name: '{country_name}'}})-[r:BORDERS]-(b:Country {{name: '{concept}'}}) RETURN b.name"
+                res = self.conn.execute(border_query)
+                if res.has_next():
+                    context_parts.append(f"Border Fact: The country borders {concept}.")
+
+                # Check generic concepts
+                concept_query = f"MATCH (c:Country {{name: '{country_name}'}})-[r:HAS_CONCEPT]->(con:Concept {{name: '{concept}'}}) RETURN r.relationship, con.name"
+                res = self.conn.execute(concept_query)
+                while res.has_next():
+                    row = res.get_next()
+                    context_parts.append(f"Fact: {country_name} has relationship '{row[0]}' with {row[1]}.")
+
+            # 3. Get all neighbors if BORDERS is in plan but no specific country mentioned
+            if "BORDERS" in plan.get("relationship_types", []) and not plan.get("required_concepts"):
+                neighbors_query = f"MATCH (c:Country {{name: '{country_name}'}})-[:BORDERS]-(n:Country) RETURN n.name"
+                res = self.conn.execute(neighbors_query)
+                neighbors = []
+                while res.has_next():
+                    neighbors.append(res.get_next()[0])
+                if neighbors:
+                    context_parts.append(f"Neighbors: {', '.join(neighbors)}")
+
+            return "\n".join(context_parts) if context_parts else "No specific graph context found for this query."
         except Exception as e:
             print(f"KuzuDB Query Error: {e}")
             return "Error extracting context from graph."
