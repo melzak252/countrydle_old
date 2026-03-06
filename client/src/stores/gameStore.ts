@@ -75,13 +75,17 @@ const createGameStore = (gameType: 'country' | 'powiaty' | 'us_states' | 'wojewo
             const parsed = JSON.parse(localData);
             if (parsed.questions.length > 0 || parsed.guesses.length > 0) {
                 try {
+                    // Clear local storage BEFORE calling sync to prevent race conditions
+                    // if fetchGameState is called again while sync is in progress
+                    localStorage.removeItem(localKey);
+                    
                     await service.syncGuestData({
                         state: parsed.state,
                         questions: parsed.questions.map((q: any) => q.id),
                         guesses: parsed.guesses.map(guessMapping[gameType]),
                         date: data.date
                     });
-                    localStorage.removeItem(localKey);
+                    
                     // Fetch the state again to get the merged data
                     const syncedData = await service.getState();
                     set({
@@ -96,6 +100,7 @@ const createGameStore = (gameType: 'country' | 'powiaty' | 'us_states' | 'wojewo
                     return;
                 } catch (syncError) {
                     console.error(`[${gameType}] Failed to sync guest data during fetchGameState:`, syncError);
+                    // If sync failed, we might want to restore localData, but usually it's safer to just let it be
                 }
             } else {
                 localStorage.removeItem(localKey);
@@ -286,13 +291,15 @@ const createGameStore = (gameType: 'country' | 'powiaty' | 'us_states' | 'wojewo
             if (localData && service.syncGuestData) {
                 const parsed = JSON.parse(localData);
                 if (parsed.questions.length > 0 || parsed.guesses.length > 0) {
+                    // Clear local storage BEFORE calling sync to prevent double sync
+                    localStorage.removeItem(localKey);
+                    
                     await service.syncGuestData({
                         state: parsed.state,
                         questions: parsed.questions.map((q: any) => q.id),
                         guesses: parsed.guesses.map(guessMapping[gameType]),
                         date: dailyDate
                     });
-                    localStorage.removeItem(localKey);
                     await get().fetchGameState();
                 } else {
                     localStorage.removeItem(localKey);
