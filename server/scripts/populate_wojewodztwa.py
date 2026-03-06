@@ -3,10 +3,10 @@ import sys
 import os
 import csv
 import logging
-import uuid
 from dotenv import load_dotenv
 from tqdm import tqdm
 from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Add the server directory to sys.path to allow imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,23 +21,17 @@ import qdrant.utils as qutils
 from db.models.wojewodztwo import Wojewodztwo
 from db.models.fragment import WojewodztwoFragment
 from db.repositories.wojewodztwo import WojewodztwoRepository
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def populate_wojewodztwa(session: AsyncSession):
-    w_rep = WojewodztwoRepository(session)
-    wojewodztwa = await w_rep.get_all()
-
-    # Check if fragments are already populated
-    frag_count_res = await session.execute(select(func.count(WojewodztwoFragment.id)))
-    frag_count = frag_count_res.scalar()
-
-    if wojewodztwa and frag_count > 0:
-        print("Wojewodztwa and fragments already populated in DB.")
-        return
-
+    # Try to find data directory (either sibling to server or inside server)
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_dir = os.path.join(base_dir, "data")
+    
+    if not os.path.exists(data_dir):
+        # Try sibling directory (for host machine execution)
+        data_dir = os.path.join(os.path.dirname(base_dir), "data")
+
     csv_file = os.path.join(data_dir, "wojewodztwa.csv")
 
     if not os.path.exists(csv_file):
@@ -70,14 +64,12 @@ async def populate_wojewodztwa(session: AsyncSession):
             await session.refresh(wojewodztwo)
         
         # Check if fragments exist for this wojewodztwo
-        if frag_count > 0:
-            f_res = await session.execute(select(func.count(WojewodztwoFragment.id)).where(WojewodztwoFragment.wojewodztwo_id == wojewodztwo.id))
-            if f_res.scalar() > 0:
-                continue
+        f_res = await session.execute(select(func.count(WojewodztwoFragment.id)).where(WojewodztwoFragment.wojewodztwo_id == wojewodztwo.id))
+        if f_res.scalar() > 0:
+            continue
 
         # Read the markdown content
-        md_rel_path = md_filename.replace("\\", "/")
-        md_path = md_rel_path
+        md_path = os.path.join(os.path.dirname(data_dir), md_filename.replace("\\", "/"))
         try:
             with open(md_path, encoding="utf8") as md_file:
                 md_content = md_file.read()
@@ -86,7 +78,7 @@ async def populate_wojewodztwa(session: AsyncSession):
             continue
 
         doc_fragments = qutils.split_document(md_content)
-        embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
+        embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
         
         fragment_texts = [fragment.page_content for fragment in doc_fragments]
         embeddings = qutils.get_bulk_embedding(fragment_texts, embedding_model)

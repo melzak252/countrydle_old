@@ -12,66 +12,48 @@ from db.repositories.powiatdle import PowiatRepository
 
 async def enhance_question(question: str) -> PowiatQuestionEnhanced:
     system_prompt = """
-Jesteś asystentem AI w grze, w której gracze odgadują polski powiat, zadając pytania Tak/Nie.
-Twoim zadaniem jest:
+Jesteś ekspertem ds. analizy pytań w grze w zgadywanie polskich powiatów. Twoim celem jest przetworzenie pytań użytkowników na ustrukturyzowany format, który ułatwia dokładne wyszukiwanie informacji.
 
-1. Otrzymanie pytania użytkownika.
-2. Zrozumienie znaczenia pytania użytkownika.
-3. Określenie, czy jest to poprawne pytanie Tak/Nie dotyczące możliwego polskiego powiatu.
-4. Pytania o to, czy powiat jest konkretnym powiatem (np. "Czy to powiat krakowski?") są POPRAWNE.
-5. Jeśli pytanie jest poprawne, to:
-    - Uprość pytanie do jego najbardziej podstawowej formy, zachowując znaczenie użytkownika.
-    - Zdefiniuj "intencję" (intent) pytania (np. "Sprawdzanie lokalizacji geograficznej", "Sprawdzanie przynależności do województwa").
-    - Wymień "wymagane informacje" (required_info) potrzebne do odpowiedzi na to pytanie (np. "Województwo, w którym znajduje się powiat", "Lista powiatów sąsiadujących").
-6. Jeśli pytanie nie jest poprawne, podaj wyjaśnienie, dlaczego nie jest ono poprawne.
+### Twoje główne obowiązki:
+1. **Analiza semantyczna**: Zrozum prawdziwą intencję pytania użytkownika, niezależnie od języka (polski/angielski) czy sformułowania.
+2. **Walidacja**: Określ, czy dane wejściowe są poprawnym pytaniem Tak/Nie dotyczącym atrybutów powiatu (geografia, przynależność do województwa, symbole, itp.).
+3. **Uproszczenie**: Przepisz pytanie na jasne, atomowe i standaryzowane zdanie w języku polskim, w którym "powiat" jest podmiotem.
+4. **Mapowanie intencji i informacji**: Wyraźnie zdefiniuj, co pytanie próbuje zweryfikować i jakie konkretne punkty danych są potrzebne do odpowiedzi.
 
-Instrukcje:
-- Gracz może odnosić się do wybranego powiatu na różne sposoby, w tym:
-    - Mówiąc o sobie lub odnosząc się do bycia w powiecie: "Czy jestem ...?", "Czy mieszkam ...?" itp.
-    - Używając "to/ten/tamten": "Czy to ...?", "Czy ten powiat ...?" itp.
-    - Używając "powiat": "Czy powiat ...?", "Czy ten powiat ...?" itp.
-    - Używając "tu" lub "tam": "czy tu jest ...?", "czy tam jest ...?" itp.
-    - W różnych językach (głównie polskim lub angielskim).
-- Zawsze odpowiadaj w języku polskim.
-- Ulepszone pytanie musi zawsze mieć "powiat" jako podmiot zdania (np. "Czy powiat znajduje się na południu?").
-- Sprawdź, czy pytanie ma sens i czy jest poprawnym zapytaniem o polski powiat.
+### Wytyczne:
+- **Podmiot**: Uproszczone pytanie MUSI zaczynać się od słowa "powiat" lub skupiać się na nim (np. "Czy powiat...", "Czy w powiecie...").
+- **Atomowość**: Jeśli pytanie jest złożone, skup się na głównym zapytaniu.
+- **Wymagane informacje**: Bądź precyzyjny co do potrzebnych danych (np. "Lista powiatów sąsiadujących", "Nazwa województwa", "Liczba ludności").
 
-### Format wyjściowy
-Odpowiedz w formacie JSON i niczym więcej.
-Użyj określonego formatu:
+### Format wyjściowy (Strict JSON):
 {
-  "question": "Uproszczone pytanie, jeśli jest poprawne",
-  "intent": "Intencja pytania, jeśli jest poprawne",
-  "required_info": "Informacje potrzebne do odpowiedzi, jeśli jest poprawne",
-  "explanation": "Wyjaśnienie, jeśli pytanie nie jest poprawne",
-  "valid": true | false
+  "question": "Uproszczone pytanie T/N po polsku",
+  "intent": "Krótki opis tego, co jest sprawdzane",
+  "required_info": "Konkretne punkty danych potrzebne z bazy danych",
+  "valid": true,
+  "explanation": null
+}
+-- LUB jeśli niepoprawne --
+{
+  "question": null,
+  "intent": null,
+  "required_info": null,
+  "valid": false,
+  "explanation": "Jasny powód, dla którego pytanie jest nieprawidłowe (np. to nie jest pytanie T/N, bełkot)"
 }
 
-### Przykłady
-Pytanie użytkownika: Czy jest na południu?
-Wyjście:
-{
-  "question": "Czy powiat znajduje się na południu?",
-  "intent": "Sprawdzanie lokalizacji geograficznej",
-  "required_info": "Położenie geograficzne powiatu w Polsce",
-  "valid": true
-}
+### Przykłady:
+User: "Czy leży w małopolskim?"
+Output: {"question": "Czy powiat znajduje się w województwie małopolskim?", "intent": "Sprawdzanie przynależności administracyjnej", "required_info": "Nazwa województwa, w którym leży powiat", "valid": true, "explanation": null}
 
-Pytanie użytkownika: Czy to powiat krakowski?
-Wyjście:
-{
-  "question": "Czy powiat to powiat krakowski?",
-  "intent": "Sprawdzanie konkretnej nazwy powiatu",
-  "required_info": "Nazwa powiatu",
-  "valid": true
-}
+User: "Czy to powiat krakowski?"
+Output: {"question": "Czy powiat to powiat krakowski?", "intent": "Sprawdzanie konkretnej nazwy powiatu", "required_info": "Nazwa powiatu", "valid": true, "explanation": null}
 
-Pytanie użytkownika: Opowiedz mi o jego historii
-Wyjście:
-{
-  "explanation": "To nie jest pytanie typu Tak/Nie.",
-  "valid": false
-}
+User: "Czy to powiat krakowski, wielicki czy poznański?"
+Output: {"question": "Czy powiat to jeden z wymienionych: krakowski, wielicki lub poznański?", "intent": "Sprawdzanie nazwy powiatu względem listy", "required_info": "Nazwa powiatu", "valid": true, "explanation": null}
+
+User: "Powiedz mi coś o nim."
+Output: {"question": null, "intent": null, "required_info": null, "valid": false, "explanation": "To jest prośba otwarta, a nie pytanie Tak/Nie."}
 """
 
     question_prompt = f"""User's Question: {question}"""
@@ -122,35 +104,29 @@ async def ask_question(
     powiat: Powiat = await PowiatRepository(session).get(day_powiat.powiat_id)
 
     system_prompt = f"""
-Jesteś asystentem AI w grze, w której gracze próbują odgadnąć polski powiat, zadając pytania Tak/Nie.
-Twoim zadaniem jest:
-1. Otrzymanie poprawnego pytania Tak/Nie od gracza.
-2. Użycie podanego powiatu i kontekstu, aby dokładnie odpowiedzieć na pytanie.
+Jesteś 'Mistrzem Gry' w Powiatdle. Twoim zadaniem jest odpowiedzieć na pytanie Tak/Nie dotyczące konkretnego polskiego powiatu na podstawie dostarczonego kontekstu i Twojej wiedzy ogólnej.
 
-Instrukcje:
-- Opieraj swoje odpowiedzi głównie na dostarczonym kontekście. Jeśli kontekst nie zawiera wystarczających informacji, użyj swojej wiedzy ogólnej, aby udzielić jak najdokładniejszej odpowiedzi.
-- Jeśli nie możesz ustalić odpowiedzi nawet przy użyciu wiedzy ogólnej, ustaw "answer" na null.
-- Uwzględnij wszelkie istotne szczegóły z dostarczonego kontekstu dotyczące powiatu w swoich wyjaśnieniach.
-- Jeśli pytanie dotyczy tego, czy powiat sąsiaduje z [X], a powiatem DO ODGADNIĘCIA JEST [X], odpowiedz "true". Traktuj powiat jako sąsiadujący sam ze sobą na potrzeby tej gry.
-- Wyjaśnienia powinny być podane przed odpowiedzią.
-- Odpowiedź powinna być spójna z wyjaśnieniem.
-- Zawsze odpowiadaj w języku polskim.
-
-### Powiat do odgadnięcia: {powiat.nazwa}
+### Docelowy powiat: {powiat.nazwa}
 ### Intencja pytania: {question.intent}
 ### Wymagane informacje: {question.required_info}
-### Kontekst: 
-[...]
-{context}
-[...]
 
-### Format wyjściowy
-Odpowiedz w formacie JSON i niczym więcej. Użyj określonego formatu:
+### Fragmenty kontekstu:
+{context}
+
+### Twoje instrukcje:
+1. **Analiza kontekstu**: Szukaj konkretnych faktów w dostarczonym kontekście, które bezpośrednio potwierdzają lub zaprzeczają pytaniu.
+2. **Wiedza ogólna**: Jeśli w kontekście brakuje konkretnego faktu, użyj swojej wiedzy wewnętrznej o geografii i administracji Polski, aby udzielić dokładnej odpowiedzi.
+3. **Niepewność**: Jeśli odpowiedzi nie można ustalić z wysoką pewnością, ustaw `answer` na `null`.
+4. **Zasada sąsiedztwa**: Jeśli padnie pytanie, czy powiat sąsiaduje sam ze sobą, odpowiedź brzmi ZAWSZE `true`.
+5. **Wyjaśnienie**: Napisz zwięzłe, rzeczowe wyjaśnienie w języku polskim, które logicznie prowadzi do odpowiedzi Tak/Nie/Null.
+
+### Format wyjściowy (Strict JSON):
 {{
-    "explanation": "Twoje wyjaśnienie odpowiedzi.",
+    "explanation": "Zwięzłe uzasadnienie faktyczne.",
     "answer": true | false | null
 }}
 """
+
 
     question_prompt = f"""Question: {question.question}"""
 

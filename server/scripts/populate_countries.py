@@ -3,10 +3,10 @@ import sys
 import os
 import csv
 import logging
-import uuid
 from dotenv import load_dotenv
 from tqdm import tqdm
 from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Add the server directory to sys.path to allow imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,15 +20,17 @@ from db import AsyncSessionLocal
 import qdrant.utils as qutils
 from db.models import Country, CountryFragment
 from db.repositories.country import CountryRepository
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def populate_countries(session: AsyncSession):
-    c_rep = CountryRepository(session)
-    countries = await c_rep.get_all_countries()
-
+    # Try to find data directory (either sibling to server or inside server)
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_dir = os.path.join(base_dir, "data")
+
+    if not os.path.exists(data_dir):
+        # Try sibling directory (for host machine execution)
+        data_dir = os.path.join(os.path.dirname(base_dir), "data")
+
     csv_file = os.path.join(data_dir, "countries.csv")
 
     if not os.path.exists(csv_file):
@@ -65,38 +67,20 @@ async def populate_countries(session: AsyncSession):
             session.add(country)
             await session.commit()
             await session.refresh(country)
-        
+
         # Check if fragments exist for this country
-        f_res = await session.execute(select(func.count(CountryFragment.id)).where(CountryFragment.country_id == country.id))
-        if f_res.scalar() > 0:
-            continue
-
-        print(f"Processing fragments for {name}...")
-
-
-        # Find or create country
-        res = await session.execute(select(Country).where(Country.name == name))
-        country = res.scalars().first()
-
-        if not country:
-            md_rel_path = md_filename.replace("\\", "/")
-            country = Country(
-                name=name,
-                official_name=name,
-                wiki="",
-                md_file=md_rel_path,
+        f_res = await session.execute(
+            select(func.count(CountryFragment.id)).where(
+                CountryFragment.country_id == country.id
             )
-            session.add(country)
-            await session.commit()
-            await session.refresh(country)
-        
-        # Check if fragments exist for this country
-        f_res = await session.execute(select(func.count(CountryFragment.id)).where(CountryFragment.country_id == country.id))
+        )
         if f_res.scalar() > 0:
             continue
 
         # Read the markdown content
-        md_path = country.md_file
+        md_path = os.path.join(
+            os.path.dirname(data_dir), md_filename.replace("\\", "/")
+        )
         try:
             with open(md_path, encoding="utf8") as md_file:
                 md_content = md_file.read()
@@ -105,8 +89,8 @@ async def populate_countries(session: AsyncSession):
             continue
 
         doc_fragments = qutils.split_document(md_content)
-        embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
-        
+        embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+
         fragment_texts = [fragment.page_content for fragment in doc_fragments]
         embeddings = qutils.get_bulk_embedding(fragment_texts, embedding_model)
 
@@ -115,7 +99,7 @@ async def populate_countries(session: AsyncSession):
             db_fragment = CountryFragment(
                 country_id=country.id,
                 text=fragment.page_content,
-                embedding=embeddings[i]
+                embedding=embeddings[i],
             )
             session.add(db_fragment)
 

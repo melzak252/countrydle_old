@@ -58,7 +58,7 @@ Output:
   "valid": true
 }
 
-User's Question: Czy to Pensylwania?
+User's Question: Is it Pennsylvania?
 Output: 
 {
   "question": "Is the state Pennsylvania?",
@@ -66,6 +66,9 @@ Output:
   "required_info": "The name of the state",
   "valid": true
 }
+
+User's Question: Is it California, Texas or Florida?
+Output: {"question": "Is the state one of the following: California, Texas, or Florida?", "intent": "Checking against a list of specific states", "required_info": "The name of the state", "valid": true, "explanation": null}
 
 User's Question: Tell me about its history
 Output:

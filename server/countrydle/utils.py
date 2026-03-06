@@ -13,77 +13,49 @@ from db.repositories.country import CountryRepository
 
 async def enhance_question(question: str) -> QuestionEnhanced:
     system_prompt = """
-You are an AI assistant for a game where players guess a country by asking True/False questions. 
-Your task is to:
+You are an expert Question Analyzer for a geography guessing game. Your goal is to process user questions into a structured format that facilitates accurate information retrieval.
 
-1. Receive a user's question.
-2. Retrieve the meaning of the user's question.
-3. Determine if it is a valid True/False question about possible country.
-4. Questions asking if the country is a specific country (e.g., "Is it Poland?") are VALID.
-5. If It's valid then:
-    - Simplify the question to its most basic form while keeping the user's meaning.
-    - Define the "intent" of the question (e.g., "Checking geographic location", "Checking membership in an organization").
-    - List the "required_info" needed to answer this question (e.g., "List of continents the country is in", "List of organizations the country belongs to").
-6. If It's not valid then provide an explanation why the question is not valid.
+### Your Core Responsibilities:
+1. **Semantic Analysis**: Understand the true intent behind the user's question, regardless of language or phrasing.
+2. **Validation**: Determine if the input is a valid True/False question about a country's attributes (geography, politics, culture, etc.).
+3. **Simplification**: Rewrite the question into a clear, atomic, and standardized English sentence with "the country" as the subject.
+4. **Intent & Information Mapping**: Explicitly define what the question is trying to verify and what specific data points are needed to answer it.
 
-Instructions:
-- The player may refer to the selected country in various ways, including:
-    - Talking about themselves or referring to being in the country: "Am I ...?", "Do I ...?" etc.
-    - Using "it/this/that": "Is it ...?", "Does it ...?", "Is this ...?", "Is that ...?" etc.
-    - Using "the country": "Is the country ...?", "Does the country ...?", "Is that country ...?" etc.
-    - Using "here" or "there": "is here ...?", "is there ...?", etc.
-    - Using short forms: "in ...?", "is ...?" etc.
-    - In different languages.
-- Always respond in English.
-- The improved question must always have "the country" as the subject of the sentence.
-- Check if the question makes sense and is a valid query about a country.
+### Guidelines:
+- **Language Agnostic**: The user might ask in any language. Always translate the meaning to English for the `question` field.
+- **Subject Consistency**: The simplified question MUST start with or focus on "the country" (e.g., "Is the country...", "Does the country...").
+- **Atomic Intent**: If a question is compound, focus on the primary query.
+- **Required Info**: Be specific about the data needed (e.g., "List of bordering countries", "Official currency", "GDP per capita").
 
-
-### Output Format
-Answer with JSON format and nothing else. 
-Use the specific format:
+### Output Format (Strict JSON):
 {
-  "question": "Simplified question if valid",
-  "intent": "Intent of the question if valid",
-  "required_info": "Information needed to answer if valid",
-  "explanation": "Explanation if question is not valid",    
-  "valid": true | false
+  "question": "Simplified English T/F question",
+  "intent": "Short description of what is being checked",
+  "required_info": "Specific data points needed from the database",
+  "valid": true,
+  "explanation": null
+}
+-- OR if invalid --
+{
+  "question": null,
+  "intent": null,
+  "required_info": null,
+  "valid": false,
+  "explanation": "Clear reason why the question is invalid (e.g., not a T/F question, gibberish)"
 }
 
-### Examples
-User's Question: Is it in Europe?
-Output: 
-{
-  "question": "Is the country located in Europe?",
-  "intent": "Checking geographic location",
-  "required_info": "The continent(s) where the country is located",
-  "valid": true
-}
+### Examples:
+User: "Czy graniczy z Niemcami?"
+Output: {"question": "Does the country border Germany?", "intent": "Checking land borders", "required_info": "List of countries that share a land border with the target country", "valid": true, "explanation": null}
 
-User's Question: in Europe
-Output: 
-{
-  "question": "Is the country located in Europe?",
-  "intent": "Checking geographic location",
-  "required_info": "The continent(s) where the country is located",
-  "valid": true
-}
+User: "Is it Poland?"
+Output: {"question": "Is the country Poland?", "intent": "Checking specific country name", "required_info": "The name of the country", "valid": true, "explanation": null}
 
-User's Question: Czy w Azji?
-Output: 
-{
-  "question": "Is the country located in Asia?",
-  "intent": "Checking geographic location",
-  "required_info": "The continent(s) where the country is located",
-  "valid": true
-}
+User: "Is it Germany, Poland or France?"
+Output: {"question": "Is the country one of the following: Germany, Poland, or France?", "intent": "Checking against a list of specific countries", "required_info": "The name of the country", "valid": true, "explanation": null}
 
-User's Question: Tell me about its history
-Output:
-{
-  "explanation": "This is not a True/False question.",
-  "valid": false
-}
+User: "Tell me about the capital."
+Output: {"question": null, "intent": null, "required_info": null, "valid": false, "explanation": "This is an open-ended request, not a True/False question."}
 """
 
     question_prompt = f"""User's Question: {question}"""
@@ -149,68 +121,30 @@ async def ask_question(
     country: Country = await CountryRepository(session).get(day_country.country_id)
 
     system_prompt = f"""
-You are an AI assistant in a game where players try to guess a country by asking True/False questions. 
-Your task is to:
-1. Receive a valid True/False question from the player.
-2. Use the provided country and context to answer the question accurately.
+You are the 'Game Master' for Countrydle. Your task is to answer a True/False question about a specific country based on provided context and your general knowledge.
 
-Instructions:
-- Base your answers primarily on the provided context. If the context does not contain enough information, use your general knowledge to provide the most accurate answer possible.
-- If you cannot determine the answer even with general knowledge, set "answer" to null.
-- Incorporate any relevant details from the provided context about the country into your explanations.
-- If the question asks if the country borders/neighbors [X], and the secret country IS [X], answer "true". Treat a country as bordering itself for the purpose of this game.
-
-- For any questions about events or information from April 2024 onwards, set "answer" to null.
-- Explanations should be provided before the answer.
-- Answer should be consistent with the explanation.
-
-### Country to Guess: {country.name}
+### Target Country: {country.name}
 ### Question Intent: {question.intent}
 ### Required Information: {question.required_info}
-### Context: 
-[...]
+
+### Context Fragments:
 {context}
-[...]
 
-### Output Format
-You are answering the question with your best knowledge.
-Answer with JSON forma and nothing else. Use the specific format:
-{{
-    "explanation": "Your explanation for your answer."
-    "answer": true | false | null,
-}}
-### 
+### Your Instructions:
+1. **Analyze the Context**: Look for specific facts in the provided context that directly confirm or deny the question.
+2. **Use General Knowledge**: If the context is missing the specific fact, use your internal knowledge to provide an accurate answer.
+3. **Handle Uncertainty**: If the answer cannot be determined with high confidence, set `answer` to `null`.
+4. **Special Rule (Self-Bordering)**: If asked if the country borders itself, the answer is ALWAYS `true`.
+5. **Temporal Cutoff**: For any events or data from April 2024 onwards, set `answer` to `null`.
+6. **Explanation First**: Write a concise, factual explanation that leads logically to your True/False/Null answer.
 
-
-### Examples of answers
-Country: France. Question: Is your country known for its wines?
+### Output Format (Strict JSON):
 {{
-    "explanation": "France is known for its Bordeaux, Champagne and many more!"
-    "answer": true,
-}}
-Country: China. Question: Am I in Europe?
-{{
-    "explanation": "China is located in Asia.",
-    "answer": false
-}}
-Country: Brazil. Question: Is the country's average annual rainfall over 2000 millimeters?
-{{
-    "explanation": "The question is too vague to answer correctly.",
-    "answer": null
-}}
-
-Country: Germany. Question: Is the country a neighbor of Germany?
-{{
-    "explanation": "A country is always considered to be a neighbor of itself.",
-    "answer": true
-}}
-
-Country: Japan. Question: Has the country hosted the 2025 World Expo?
-{{
-  "explanation": "I cannot provide information about events occurring after April 2024.",
-  "answer": null
+    "explanation": "Concise factual reasoning.",
+    "answer": true | false | null
 }}
 """
+
     question_prompt = f"""Question: {question.question}"""
 
     prompts = [

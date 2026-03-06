@@ -23,7 +23,7 @@ from .utils import get_points, upsert_in_batches
 load_dotenv()
 
 EMBEDDING_SIZE = int(os.getenv("EMBEDDING_SIZE", "1536"))
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
@@ -189,8 +189,9 @@ async def init_qdrant(session: AsyncSession):
                     )
 
         # Sync data if needed (only for main fragment collections)
-        if name in ["countries", "powiaty", "wojewodztwa", "us_states"]:
-            await sync_from_postgres(session, name)
+        # if name in ["countries", "powiaty", "wojewodztwa", "us_states"]:
+        #     await sync_from_postgres(session, name)
+
 
     if not client.collection_exists("questions"):
         print("Creating collection 'questions'...")

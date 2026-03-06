@@ -3,10 +3,10 @@ import sys
 import os
 import csv
 import logging
-import uuid
 from dotenv import load_dotenv
 from tqdm import tqdm
 from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Add the server directory to sys.path to allow imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,23 +21,17 @@ import qdrant.utils as qutils
 from db.models.powiat import Powiat
 from db.models.fragment import PowiatFragment
 from db.repositories.powiatdle import PowiatRepository
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def populate_powiaty(session: AsyncSession):
-    p_rep = PowiatRepository(session)
-    powiaty = await p_rep.get_all()
-
-    # Check if fragments are already populated
-    frag_count_res = await session.execute(select(func.count(PowiatFragment.id)))
-    frag_count = frag_count_res.scalar()
-
-    if powiaty and frag_count > 0:
-        print("Powiaty and fragments already populated in DB.")
-        return
-
+    # Try to find data directory (either sibling to server or inside server)
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_dir = os.path.join(base_dir, "data")
+    
+    if not os.path.exists(data_dir):
+        # Try sibling directory (for host machine execution)
+        data_dir = os.path.join(os.path.dirname(base_dir), "data")
+
     csv_file = os.path.join(data_dir, "powiaty.csv")
 
     if not os.path.exists(csv_file):
@@ -75,8 +69,7 @@ async def populate_powiaty(session: AsyncSession):
             continue
 
         # Read the markdown content
-        md_rel_path = md_filename.replace("\\", "/")
-        md_path = md_rel_path
+        md_path = os.path.join(os.path.dirname(data_dir), md_filename.replace("\\", "/"))
         try:
             with open(md_path, encoding="utf8") as md_file:
                 md_content = md_file.read()
@@ -85,7 +78,7 @@ async def populate_powiaty(session: AsyncSession):
             continue
 
         doc_fragments = qutils.split_document(md_content)
-        embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-ada-002")
+        embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
         
         fragment_texts = [fragment.page_content for fragment in doc_fragments]
         embeddings = qutils.get_bulk_embedding(fragment_texts, embedding_model)
