@@ -74,51 +74,6 @@ const PortalTooltip = ({ children, content, position = 'top', className }: Porta
   );
 }
 
-      
-      left = left + window.scrollX;
-      
-      setCoords({ top, left });
-    }
-  };
-
-  useEffect(() => {
-     if(isVisible) {
-         updatePosition();
-         window.addEventListener('scroll', updatePosition, true);
-         window.addEventListener('resize', updatePosition);
-     }
-     return () => {
-         window.removeEventListener('scroll', updatePosition, true);
-         window.removeEventListener('resize', updatePosition);
-     }
-  }, [isVisible]);
-
-  return (
-    <div 
-        ref={triggerRef}
-        onMouseEnter={() => setIsVisible(true)}
-        onMouseLeave={() => setIsVisible(false)}
-        className={cn("relative inline-block", className)}
-    >
-
-      {children}
-      {isVisible && createPortal(
-        <div 
-            className={cn("fixed z-[9999] pointer-events-none transform -translate-x-1/2", className)}
-            style={{ 
-                top: coords.top, 
-                left: coords.left,
-                transform: `translate(-50%, ${position === 'top' ? '-100%' : '0'})` 
-            }}
-        >
-            {content}
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-}
-
 interface HistoryProps {
   questions: Question[];
   isGameOver?: boolean;
@@ -229,7 +184,6 @@ export default function History({ questions, isGameOver = false }: HistoryProps)
 
           return cardContent;
         })
-
       )}
     </div>
   );
