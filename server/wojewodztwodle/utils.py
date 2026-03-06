@@ -1,6 +1,8 @@
 import os
 import json
+from typing import List, Tuple
 from openai import OpenAI
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Wojewodztwo, WojewodztwodleDay, User
@@ -31,7 +33,7 @@ Jesteś ekspertem ds. analizy pytań w grze w zgadywanie polskich województw. T
 ### Format wyjściowy (Strict JSON):
 {
   "question": "Uproszczone pytanie T/N po polsku",
-  "intent": "Krótki opis tego, co jest sprawdzane",
+  "intent": "Szczegółowy opis intencji użytkownika i tego, co próbuje on ustalić",
   "required_info": "Konkretne punkty danych potrzebne z bazy danych",
   "valid": true,
   "explanation": null
@@ -47,13 +49,13 @@ Jesteś ekspertem ds. analizy pytań w grze w zgadywanie polskich województw. T
 
 ### Przykłady:
 User: "Czy graniczy z morzem?"
-Output: {"question": "Czy województwo ma dostęp do Morza Bałtyckiego?", "intent": "Sprawdzanie dostępu do morza", "required_info": "Położenie geograficzne i granice morskie województwa", "valid": true, "explanation": null}
+Output: {"question": "Czy województwo ma dostęp do Morza Bałtyckiego?", "intent": "Użytkownik chce zweryfikować, czy docelowe województwo jest położone nad Morzem Bałtyckim.", "required_info": "Położenie geograficzne i granice morskie województwa", "valid": true, "explanation": null}
 
 User: "Czy to małopolskie?"
-Output: {"question": "Czy województwo to małopolskie?", "intent": "Sprawdzanie konkretnej nazwy województwa", "required_info": "Nazwa województwa", "valid": true, "explanation": null}
+Output: {"question": "Czy województwo to małopolskie?", "intent": "Użytkownik próbuje bezpośrednio odgadnąć nazwę województwa, sprawdzając czy jest to województwo małopolskie.", "required_info": "Nazwa województwa", "valid": true, "explanation": null}
 
 User: "Czy to małopolskie, śląskie czy opolskie?"
-Output: {"question": null, "intent": null, "required_info": null, "valid": false, "explanation": "To jest pytanie wielokrotnego wyboru. Proszę zadać pojedyncze pytanie Tak/Nie."}
+Output: {"question": "Czy województwo to jedno z wymienionych: małopolskie, śląskie lub opolskie?", "intent": "Użytkownik podaje listę potencjalnych nazw województw i chce wiedzieć, czy docelowe województwo znajduje się na tej liście.", "required_info": "Nazwa województwa", "valid": true, "explanation": null}
 
 User: "Ile ma mieszkańców?"
 Output: {"question": null, "intent": null, "required_info": null, "valid": false, "explanation": "To jest pytanie otwarte o liczbę, a nie pytanie Tak/Nie."}

@@ -1,6 +1,8 @@
 import os
 import json
+from typing import List, Tuple
 from openai import OpenAI
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import USState, USStatedleDay, User
@@ -37,15 +39,21 @@ Instructions:
 - The improved question must always have "the state" as the subject of the sentence.
 - Check if the question makes sense and is a valid query about a US state.
 
-### Output Format
-Answer with JSON format and nothing else. 
-Use the specific format:
+### Output Format (Strict JSON):
 {
-  "question": "Simplified question if valid",
-  "intent": "Intent of the question if valid",
-  "required_info": "Information needed to answer if valid",
-  "explanation": "Explanation if question is not valid",    
-  "valid": true | false
+  "question": "Simplified English T/F question",
+  "intent": "Detailed description of the user's intention and what they are trying to find out",
+  "required_info": "Specific data points needed from the database",
+  "valid": true,
+  "explanation": null
+}
+-- OR if invalid --
+{
+  "question": null,
+  "intent": null,
+  "required_info": null,
+  "valid": false,
+  "explanation": "Clear reason why the question is invalid (e.g., not a T/F question, gibberish)"
 }
 
 ### Examples
@@ -53,7 +61,7 @@ User's Question: Is it in the South?
 Output: 
 {
   "question": "Is the state located in the South?",
-  "intent": "Checking geographic location",
+  "intent": "The user wants to verify if the target state is located within the Southern region of the United States.",
   "required_info": "The region where the state is located",
   "valid": true
 }
@@ -62,13 +70,13 @@ User's Question: Is it Pennsylvania?
 Output: 
 {
   "question": "Is the state Pennsylvania?",
-  "intent": "Checking specific state name",
+  "intent": "The user is making a direct guess to see if the target state is Pennsylvania.",
   "required_info": "The name of the state",
   "valid": true
 }
 
 User's Question: Is it California, Texas or Florida?
-Output: {"question": "Is the state one of the following: California, Texas, or Florida?", "intent": "Checking against a list of specific states", "required_info": "The name of the state", "valid": true, "explanation": null}
+Output: {"question": "Is the state one of the following: California, Texas, or Florida?", "intent": "The user is providing a list of states and wants to know if the target state is one of them.", "required_info": "The name of the state", "valid": true, "explanation": null}
 
 User's Question: Tell me about its history
 Output:

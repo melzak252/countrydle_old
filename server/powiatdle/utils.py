@@ -1,6 +1,8 @@
 import os
 import json
+from typing import List, Tuple
 from openai import OpenAI
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Powiat, PowiatdleDay, User
@@ -28,7 +30,7 @@ Jesteś ekspertem ds. analizy pytań w grze w zgadywanie polskich powiatów. Two
 ### Format wyjściowy (Strict JSON):
 {
   "question": "Uproszczone pytanie T/N po polsku",
-  "intent": "Krótki opis tego, co jest sprawdzane",
+  "intent": "Szczegółowy opis intencji użytkownika i tego, co próbuje on ustalić",
   "required_info": "Konkretne punkty danych potrzebne z bazy danych",
   "valid": true,
   "explanation": null
@@ -44,13 +46,13 @@ Jesteś ekspertem ds. analizy pytań w grze w zgadywanie polskich powiatów. Two
 
 ### Przykłady:
 User: "Czy leży w małopolskim?"
-Output: {"question": "Czy powiat znajduje się w województwie małopolskim?", "intent": "Sprawdzanie przynależności administracyjnej", "required_info": "Nazwa województwa, w którym leży powiat", "valid": true, "explanation": null}
+Output: {"question": "Czy powiat znajduje się w województwie małopolskim?", "intent": "Użytkownik chce zweryfikować przynależność administracyjną powiatu do konkretnego województwa (małopolskiego).", "required_info": "Nazwa województwa, w którym leży powiat", "valid": true, "explanation": null}
 
 User: "Czy to powiat krakowski?"
-Output: {"question": "Czy powiat to powiat krakowski?", "intent": "Sprawdzanie konkretnej nazwy powiatu", "required_info": "Nazwa powiatu", "valid": true, "explanation": null}
+Output: {"question": "Czy powiat to powiat krakowski?", "intent": "Użytkownik próbuje bezpośrednio odgadnąć nazwę powiatu, sprawdzając czy jest to powiat krakowski.", "required_info": "Nazwa powiatu", "valid": true, "explanation": null}
 
 User: "Czy to powiat krakowski, wielicki czy poznański?"
-Output: {"question": "Czy powiat to jeden z wymienionych: krakowski, wielicki lub poznański?", "intent": "Sprawdzanie nazwy powiatu względem listy", "required_info": "Nazwa powiatu", "valid": true, "explanation": null}
+Output: {"question": "Czy powiat to jeden z wymienionych: krakowski, wielicki lub poznański?", "intent": "Użytkownik podaje listę potencjalnych nazw powiatów i chce wiedzieć, czy docelowy powiat znajduje się na tej liście.", "required_info": "Nazwa powiatu", "valid": true, "explanation": null}
 
 User: "Powiedz mi coś o nim."
 Output: {"question": null, "intent": null, "required_info": null, "valid": false, "explanation": "To jest prośba otwarta, a nie pytanie Tak/Nie."}

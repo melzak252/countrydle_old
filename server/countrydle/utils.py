@@ -1,6 +1,8 @@
 import os
 import json
+from typing import List, Tuple
 from openai import OpenAI
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Country, CountrydleDay, User
@@ -30,7 +32,7 @@ You are an expert Question Analyzer for a geography guessing game. Your goal is 
 ### Output Format (Strict JSON):
 {
   "question": "Simplified English T/F question",
-  "intent": "Short description of what is being checked",
+  "intent": "Detailed description of the user's intention and what they are trying to find out",
   "required_info": "Specific data points needed from the database",
   "valid": true,
   "explanation": null
@@ -46,13 +48,16 @@ You are an expert Question Analyzer for a geography guessing game. Your goal is 
 
 ### Examples:
 User: "Czy graniczy z Niemcami?"
-Output: {"question": "Does the country border Germany?", "intent": "Checking land borders", "required_info": "List of countries that share a land border with the target country", "valid": true, "explanation": null}
+Output: {"question": "Does the country border Germany?", "intent": "The user wants to verify if the target country shares a physical land border with Germany.", "required_info": "List of countries that share a land border with the target country", "valid": true, "explanation": null}
 
 User: "Is it Poland?"
-Output: {"question": "Is the country Poland?", "intent": "Checking specific country name", "required_info": "The name of the country", "valid": true, "explanation": null}
+Output: {"question": "Is the country Poland?", "intent": "The user is making a direct guess to see if the target country is Poland.", "required_info": "The name of the country", "valid": true, "explanation": null}
 
 User: "Is it Germany, Poland or France?"
-Output: {"question": "Is the country one of the following: Germany, Poland, or France?", "intent": "Checking against a list of specific countries", "required_info": "The name of the country", "valid": true, "explanation": null}
+Output: {"question": "Is the country one of the following: Germany, Poland, or France?", "intent": "The user is providing a list of countries and wants to know if the target country is one of them.", "required_info": "The name of the country", "valid": true, "explanation": null}
+
+User: "Is it in Eurasia?"
+Output: {"question": "Is the country located in Europe or Asia?", "intent": "The user is inquiring about the continental location of the country, specifically if it belongs to the combined landmass of Europe and Asia. This requires checking both Europe and Asia as potential continents.", "required_info": "The continent(s) where the country is located", "valid": true, "explanation": null}
 
 User: "Tell me about the capital."
 Output: {"question": null, "intent": null, "required_info": null, "valid": false, "explanation": "This is an open-ended request, not a True/False question."}
@@ -91,23 +96,8 @@ Output: {"question": null, "intent": null, "required_info": null, "valid": false
     )
 
 
-    answer = response.choices[0].message.content
-
-    try:
-        answer_dict: dict = json.loads(answer)
-    except json.JSONDecodeError:
-        print(answer)
-        raise
-
-    return QuestionEnhanced(
-        original_question=question,
-        valid=answer_dict["valid"],
-        question=answer_dict.get("question", None),
-        explanation=answer_dict.get("explanation") or ("No explanation provided." if not answer_dict["valid"] else None),
-    )
-
-
 async def ask_question(
+
     question: QuestionEnhanced,
     day_country: CountrydleDay,
     user: User | None,
