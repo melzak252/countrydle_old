@@ -131,7 +131,7 @@ class CountrydleStateResponse(BaseModel):
     user: UserDisplay | None = None
     date: str
     state: CountrydleStateSchema
-    questions: List[QuestionDisplay | InvalidQuestionDisplay] = []
+    questions: List[FullQuestionDisplay | InvalidQuestionDisplay] = []
     guesses: List[GuessDisplay] = []
     country: CountryDisplay | None = None
 
