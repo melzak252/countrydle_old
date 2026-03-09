@@ -273,7 +273,7 @@ async def get_admin_questions(
     return await CountrydleQuestionsRepository(session).get_all_questions()
 
 
-@router.post("/question", response_model=Union[QuestionDisplay, InvalidQuestionDisplay])
+@router.post("/question", response_model=Union[FullQuestionDisplay, InvalidQuestionDisplay])
 async def ask_question(
     question: QuestionBase,
     user: User | None = Depends(get_current_or_guest_user),
@@ -323,7 +323,7 @@ async def ask_question(
             )
 
 
-        return QuestionDisplay.model_validate(new_quest)
+        return FullQuestionDisplay.model_validate(new_quest)
 
     state = await CountrydleStateRepository(session).get_player_countrydle_state(
         user,
@@ -402,7 +402,7 @@ async def ask_question(
     state.questions_asked += 1
     state = await CountrydleStateRepository(session).update_countrydle_state(state)
 
-    return QuestionDisplay.model_validate(new_quest)
+    return FullQuestionDisplay.model_validate(new_quest)
 
 
 @router.get("/reveal", response_model=CountryDisplay)
