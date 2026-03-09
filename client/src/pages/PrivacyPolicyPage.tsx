@@ -94,7 +94,7 @@ export default function PrivacyPolicyPage() {
               We retain your personal information for as long as your account is active. You have the right to access, rectify, or erase your data. 
             </p>
             <p className="text-zinc-300 leading-relaxed">
-              If you are in the EU (GDPR jurisdiction), you have specific rights regarding data portability and withdrawing consent. To exercise these rights, please contact us at <strong>support@jmelzacki.com</strong>.
+              If you are in the EU (GDPR jurisdiction), you have specific rights regarding data portability and withdrawing consent. To exercise these rights, please contact us at <strong>melzacki.jakub@gmail.com</strong>.
             </p>
           </section>
 
@@ -116,7 +116,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-2xl font-semibold mb-4 text-white">9. Contact Us</h2>
             <p className="text-zinc-300 leading-relaxed">
               If you have any questions about this Privacy Policy, please contact us at:<br />
-              Email: <strong>support@jmelzacki.com</strong> or <strong>melzacki.jakub@gmail.com</strong>
+              Email: <strong>melzacki.jakub@gmail.com</strong>
             </p>
           </section>
         </div>

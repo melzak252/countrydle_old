@@ -97,7 +97,7 @@ export default function TermsOfServicePage() {
             <h2 className="text-2xl font-semibold mb-4 text-white">10. Contact Information</h2>
             <p className="text-zinc-300 leading-relaxed">
               If you have any questions about these Terms, please contact us at:<br />
-              Email: <strong>support@jmelzacki.com</strong>
+              Email: <strong>melzacki.jakub@gmail.com</strong>
             </p>
           </section>
         </div>

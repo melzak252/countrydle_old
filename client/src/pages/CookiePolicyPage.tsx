@@ -66,7 +66,7 @@ export default function CookiePolicyPage() {
             <h2 className="text-2xl font-semibold mb-4 text-white">5. Contact Us</h2>
             <p className="text-zinc-300 leading-relaxed">
               If you have any questions about our use of cookies, please contact us at:<br />
-              Email: <strong>support@jmelzacki.com</strong>
+              Email: <strong>melzacki.jakub@gmail.com</strong>
             </p>
           </section>
         </div>
