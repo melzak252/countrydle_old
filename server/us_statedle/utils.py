@@ -147,8 +147,8 @@ Instructions:
 - If you cannot determine the answer even with general knowledge, set "answer" to null.
 - Incorporate any relevant details from the provided context about the state into your explanations.
 - If the question asks if the state borders/neighbors [X], and the secret state IS [X], answer "true". Treat a state as bordering itself for the purpose of this game.
-- Explanations should be provided before the answer.
-- Answer should be consistent with the explanation.
+- **Informative Explanations**: Write the `explanation` as factual information about the state that answers the question and provides details. Avoid starting with 'Yes' or 'No' or simply repeating the answer. The explanation should be an informative statement about the state that justifies the True/False answer (e.g., instead of 'Yes, it is in the South', use '{state.name} is located in the Southeastern United States and is known for its humid subtropical climate.').
+- **Handle Logical 'OR' and Lists**: If a question contains 'or' or provides a list of options (e.g., 'Is it California or Texas?'), the answer is `true` if the target state matches **at least one** of those options.
 
 ### State to Guess: {state.name}
 ### Question Intent: {question.intent}
@@ -161,7 +161,7 @@ Instructions:
 ### Output Format
 Answer with JSON format and nothing else. Use the specific format:
 {{
-    "explanation": "Your explanation for your answer.",
+    "explanation": "Informative factual statement about the state.",
     "answer": true | false | null
 }}
 """
