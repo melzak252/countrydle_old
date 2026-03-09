@@ -20,6 +20,7 @@ from schemas.countrydle import (
 )
 from schemas.country import CountryDisplay
 from schemas.user import UserDisplay
+from schemas.countrydle import FullQuestionDisplay
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import update
@@ -33,7 +34,7 @@ from db.repositories.question import (
 )
 from qdrant.utils import add_question_to_qdrant
 from db.repositories.country import CountryRepository
-from users.utils import get_current_or_guest_user, get_current_user
+from users.utils import get_current_or_guest_user, get_current_user, get_admin_user
 
 import countrydle.utils as gutils
 from game_logic import GameConfig, GameRules, GameState
@@ -262,6 +263,14 @@ async def get_countries(
     session: AsyncSession = Depends(get_db),
 ):
     return await CountryRepository(session).get_all_countries()
+
+
+@router.get("/admin/questions", response_model=list[FullQuestionDisplay])
+async def get_admin_questions(
+    admin: User = Depends(get_admin_user),
+    session: AsyncSession = Depends(get_db),
+):
+    return await CountrydleQuestionsRepository(session).get_all_questions()
 
 
 @router.post("/question", response_model=Union[QuestionDisplay, InvalidQuestionDisplay])

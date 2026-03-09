@@ -76,6 +76,9 @@ class USStateQuestionDisplay(BaseModel):
     asked_at: datetime
     user_id: Optional[int] = None
     day_id: int
+    context: Optional[str] = None
+    user: Optional[UserDisplay] = None
+    us_state: Optional[USStateDisplay] = None
 
     model_config = ConfigDict(from_attributes=True)
 

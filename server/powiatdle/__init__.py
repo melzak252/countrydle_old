@@ -26,7 +26,7 @@ from schemas.powiatdle import (
     DayPowiatDisplay,
     PowiatdleSyncSchema,
 )
-from users.utils import get_current_or_guest_user, get_current_user
+from users.utils import get_current_or_guest_user, get_current_user, get_admin_user
 import powiatdle.utils as putils
 from game_logic import GameConfig, GameRules, GameState
 
@@ -204,6 +204,14 @@ async def get_powiaty(
     session: AsyncSession = Depends(get_db),
 ):
     return await PowiatRepository(session).get_all()
+
+
+@router.get("/admin/questions", response_model=List[PowiatQuestionDisplay])
+async def get_admin_questions(
+    admin: User = Depends(get_admin_user),
+    session: AsyncSession = Depends(get_db),
+):
+    return await PowiatdleQuestionRepository(session).get_all_questions()
 
 
 @router.post("/question", response_model=PowiatQuestionDisplay)

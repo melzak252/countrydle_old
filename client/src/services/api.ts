@@ -205,6 +205,26 @@ export const wojewodztwoService = {
   },
 };
 
+export const adminService = {
+  getCountrydleQuestions: async (): Promise<any[]> => {
+    const response = await api.get('/countrydle/admin/questions');
+    return response.data;
+  },
+  getPowiatdleQuestions: async (): Promise<any[]> => {
+    const response = await api.get('/powiatdle/admin/questions');
+    return response.data;
+  },
+  getUSStatedleQuestions: async (): Promise<any[]> => {
+    const response = await api.get('/us_statedle/admin/questions');
+    return response.data;
+  },
+  getWojewodztwodleQuestions: async (): Promise<any[]> => {
+    const response = await api.get('/wojewodztwodle/admin/questions');
+    return response.data;
+  },
+};
+
+
 export const timeService = {
   getServerTime: async (): Promise<{ server_time: string; next_game_at: string }> => {
     const response = await api.get('/time');

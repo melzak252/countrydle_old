@@ -26,7 +26,7 @@ from schemas.wojewodztwodle import (
     DayWojewodztwoDisplay,
     WojewodztwodleSyncSchema,
 )
-from users.utils import get_current_or_guest_user, get_current_user
+from users.utils import get_current_or_guest_user, get_current_user, get_admin_user
 import wojewodztwodle.utils as wutils
 from game_logic import GameConfig, GameRules, GameState
 
@@ -208,6 +208,14 @@ async def get_wojewodztwa(
     session: AsyncSession = Depends(get_db),
 ):
     return await WojewodztwoRepository(session).get_all()
+
+
+@router.get("/admin/questions", response_model=List[WojewodztwoQuestionDisplay])
+async def get_admin_questions(
+    admin: User = Depends(get_admin_user),
+    session: AsyncSession = Depends(get_db),
+):
+    return await WojewodztwodleQuestionRepository(session).get_all_questions()
 
 
 @router.post("/question", response_model=WojewodztwoQuestionDisplay)

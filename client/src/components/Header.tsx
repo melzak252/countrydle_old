@@ -45,6 +45,12 @@ export default function Header() {
           <Link to="/leaderboard" className="hover:text-blue-400 transition-colors">{t('header.leaderboard')}</Link>
           <Link to="/archive" className="hover:text-blue-400 transition-colors">{t('header.archive')}</Link>
           
+          {user?.is_admin && (
+            <Link to="/admin" className="px-3 py-1 bg-red-900/30 text-red-400 border border-red-800/50 rounded-md text-sm font-bold hover:bg-red-900/50 transition-colors">
+              ADMIN
+            </Link>
+          )}
+          
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
               <Link 
@@ -120,6 +126,11 @@ export default function Header() {
             <div className="flex flex-col space-y-2">
               <Link to="/leaderboard" onClick={() => setIsMenuOpen(false)} className="px-3 py-2 hover:bg-zinc-800 rounded-lg transition-colors">{t('header.leaderboard')}</Link>
               <Link to="/archive" onClick={() => setIsMenuOpen(false)} className="px-3 py-2 hover:bg-zinc-800 rounded-lg transition-colors">{t('header.archive')}</Link>
+              {user?.is_admin && (
+                <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="px-3 py-2 text-red-400 font-bold hover:bg-zinc-800 rounded-lg transition-colors">
+                  ADMIN DASHBOARD
+                </Link>
+              )}
             </div>
 
             <div className="pt-4 border-t border-zinc-800 flex flex-col space-y-3">

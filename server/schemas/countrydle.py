@@ -47,6 +47,9 @@ class QuestionDisplay(BaseModel):
 
 class FullQuestionDisplay(QuestionDisplay):
     explanation: str
+    context: str | None
+    user: UserDisplay | None = None
+    country: CountryDisplay | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

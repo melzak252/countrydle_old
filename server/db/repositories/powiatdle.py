@@ -261,3 +261,14 @@ class PowiatdleQuestionRepository:
             .order_by(PowiatdleQuestion.asked_at.asc())
         )
         return list(result.scalars().all())
+
+    async def get_all_questions(self) -> List[PowiatdleQuestion]:
+        result = await self.session.execute(
+            select(PowiatdleQuestion)
+            .options(
+                joinedload(PowiatdleQuestion.user),
+                joinedload(PowiatdleQuestion.day).joinedload(PowiatdleDay.powiat)
+            )
+            .order_by(PowiatdleQuestion.asked_at.desc())
+        )
+        return list(result.scalars().all())

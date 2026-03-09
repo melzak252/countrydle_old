@@ -26,7 +26,7 @@ from schemas.us_statedle import (
     DayUSStateDisplay,
     USStatedleSyncSchema,
 )
-from users.utils import get_current_or_guest_user, get_current_user
+from users.utils import get_current_or_guest_user, get_current_user, get_admin_user
 import us_statedle.utils as uutils
 from game_logic import GameConfig, GameRules, GameState
 
@@ -204,6 +204,14 @@ async def get_us_states(
     session: AsyncSession = Depends(get_db),
 ):
     return await USStateRepository(session).get_all()
+
+
+@router.get("/admin/questions", response_model=List[USStateQuestionDisplay])
+async def get_admin_questions(
+    admin: User = Depends(get_admin_user),
+    session: AsyncSession = Depends(get_db),
+):
+    return await USStatedleQuestionRepository(session).get_all_questions()
 
 
 @router.post("/question", response_model=USStateQuestionDisplay)

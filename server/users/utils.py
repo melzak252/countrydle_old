@@ -105,6 +105,17 @@ async def get_current_user(
     return user
 
 
+async def get_admin_user(
+    user: User = Depends(get_current_user),
+) -> User:
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user does not have enough privileges",
+        )
+    return user
+
+
 async def get_current_or_guest_user(
     response: Response,
     access_token: str = Cookie(None),

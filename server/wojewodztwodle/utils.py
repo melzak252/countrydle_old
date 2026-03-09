@@ -74,6 +74,8 @@ Output: {"question": null, "intent": null, "required_info": null, "valid": false
         model=model,
         messages=prompts,
         response_format={"type": "json_object"},
+        temperature=0.0,
+        seed=42,
     )
 
     answer = response.choices[0].message.content

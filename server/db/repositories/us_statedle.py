@@ -248,3 +248,14 @@ class USStatedleQuestionRepository:
             .order_by(USStatedleQuestion.asked_at.asc())
         )
         return list(result.scalars().all())
+
+    async def get_all_questions(self) -> List[USStatedleQuestion]:
+        result = await self.session.execute(
+            select(USStatedleQuestion)
+            .options(
+                joinedload(USStatedleQuestion.user),
+                joinedload(USStatedleQuestion.day).joinedload(USStatedleDay.us_state)
+            )
+            .order_by(USStatedleQuestion.asked_at.desc())
+        )
+        return list(result.scalars().all())

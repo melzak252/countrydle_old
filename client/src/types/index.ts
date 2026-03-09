@@ -3,6 +3,7 @@ export interface User {
   username: string | null;
   email: string;
   verified: boolean;
+  is_admin: boolean;
   avatar_url?: string;
 }
 

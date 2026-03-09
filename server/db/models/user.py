@@ -29,6 +29,7 @@ class User(Base):
 
     hashed_password = Column(String, nullable=True)
     verified = Column(Boolean, default=False, nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=func.now())
 
     # Relationships

@@ -75,6 +75,9 @@ class WojewodztwoQuestionDisplay(BaseModel):
     asked_at: datetime
     user_id: Optional[int] = None
     day_id: int
+    context: Optional[str] = None
+    user: Optional[UserDisplay] = None
+    wojewodztwo: Optional[WojewodztwoDisplay] = None
 
     model_config = ConfigDict(from_attributes=True)
 

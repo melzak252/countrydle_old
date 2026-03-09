@@ -47,6 +47,7 @@ class UserDisplay(BaseModel):
     id: int
     username: str | None
     email: EmailStr
+    is_admin: bool = False
 
 
     model_config = ConfigDict(from_attributes=True)

@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Any
 from sqlalchemy import Integer, and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from db.models import CountrydleDay, CountrydleQuestion, User
 from schemas.countrydle import (
@@ -44,9 +45,9 @@ class CountrydleQuestionsRepository:
             .where(CountrydleQuestion.user_id == user.id, CountrydleQuestion.day_id == day.id)
             .order_by(CountrydleQuestion.id.asc())
         )
-        return questions_result.scalars().all()
+        return list(questions_result.scalars().all())
 
-    async def get_user_question_statistics(self, user: User) -> List[CountrydleQuestion]:
+    async def get_user_question_statistics(self, user: User) -> Any:
 
         questions_result = await self.session.execute(
             select(
@@ -58,3 +59,14 @@ class CountrydleQuestionsRepository:
         row = questions_result.first()
         print(row)
         return row
+
+    async def get_all_questions(self) -> List[CountrydleQuestion]:
+        result = await self.session.execute(
+            select(CountrydleQuestion)
+            .options(
+                joinedload(CountrydleQuestion.user),
+                joinedload(CountrydleQuestion.day).joinedload(CountrydleDay.country)
+            )
+            .order_by(CountrydleQuestion.asked_at.desc())
+        )
+        return list(result.scalars().all())

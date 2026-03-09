@@ -255,3 +255,14 @@ class WojewodztwodleQuestionRepository:
             .order_by(WojewodztwodleQuestion.asked_at.asc())
         )
         return list(result.scalars().all())
+
+    async def get_all_questions(self) -> List[WojewodztwodleQuestion]:
+        result = await self.session.execute(
+            select(WojewodztwodleQuestion)
+            .options(
+                joinedload(WojewodztwodleQuestion.user),
+                joinedload(WojewodztwodleQuestion.day).joinedload(WojewodztwodleDay.wojewodztwo)
+            )
+            .order_by(WojewodztwodleQuestion.asked_at.desc())
+        )
+        return list(result.scalars().all())
