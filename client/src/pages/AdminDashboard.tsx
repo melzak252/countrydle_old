@@ -1,13 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { adminService } from '../services/api';
-import { useTranslation } from 'react-i18next';
-import { Search, Filter, Calendar, User as UserIcon, Globe, MapPin, Flag } from 'lucide-react';
-import { format } from 'date-fns';
+import { Search, Calendar, User as UserIcon, Globe, Flag } from 'lucide-react';
 
 type GameType = 'countrydle' | 'powiatdle' | 'us_statedle' | 'wojewodztwodle';
 
 export default function AdminDashboard() {
-  const { t } = useTranslation();
   const [gameType, setGameType] = useState<GameType>('countrydle');
   const [questions, setQuestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,7 +53,7 @@ export default function AdminDashboard() {
       const username = q.user?.username || 'Guest';
       const matchesUser = username.toLowerCase().includes(userFilter.toLowerCase());
       
-      const dateStr = format(new Date(q.asked_at), 'yyyy-MM-dd');
+      const dateStr = new Date(q.asked_at).toISOString().split('T')[0];
       const matchesDate = !dateFilter || dateStr === dateFilter;
       
       const targetName = q.country?.name || q.powiat?.nazwa || q.us_state?.name || q.wojewodztwo?.nazwa || '';
@@ -68,6 +65,11 @@ export default function AdminDashboard() {
 
   const getTargetName = (q: any) => {
     return q.country?.name || q.powiat?.nazwa || q.us_state?.name || q.wojewodztwo?.nazwa || 'Unknown';
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -156,7 +158,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-1 bg-zinc-800 rounded-full text-xs font-medium text-zinc-300">
                     <Calendar size={14} />
-                    {format(new Date(q.asked_at), 'MMM d, yyyy HH:mm')}
+                    {formatDate(q.asked_at)}
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-900/30 text-blue-400 rounded-full text-xs font-medium border border-blue-800/50">
                     <Globe size={14} />

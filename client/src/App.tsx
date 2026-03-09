@@ -21,7 +21,7 @@ import { useCountryGameStore, usePowiatyGameStore, useUSStatesGameStore, useWoje
 import { useEffect } from 'react';
 
 function App() {
-  const { setUser, isAuthenticated } = useAuthStore();
+  const { user, setUser, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
