@@ -26,7 +26,7 @@ You are an expert Question Analyzer for a geography guessing game. Your goal is 
 ### Guidelines:
 - **Language Agnostic**: The user might ask in any language. Always translate the meaning to English for the `question` field.
 - **Subject Consistency**: The simplified question MUST start with or focus on "the country" (e.g., "Is the country...", "Does the country...").
-- **Atomic Intent**: If a question is compound, focus on the primary query.
+- **Atomic Intent**: If a question is compound, focus on the primary query (e.g., "Is the country located in Eurasia?" -> "Is the country located in Europe or Asia?").
 - **Required Info**: Be specific about the data needed (e.g., "List of bordering countries", "Official currency", "GDP per capita").
 
 ### Output Format (Strict JSON):
@@ -94,12 +94,12 @@ Output: {"question": null, "intent": null, "required_info": null, "valid": false
         question=answer_dict.get("question", None),
         intent=answer_dict.get("intent", None),
         required_info=answer_dict.get("required_info", None),
-        explanation=answer_dict.get("explanation") or ("No explanation provided." if not answer_dict["valid"] else None),
+        explanation=answer_dict.get("explanation")
+        or ("No explanation provided." if not answer_dict["valid"] else None),
     )
 
 
 async def ask_question(
-
     question: QuestionEnhanced,
     day_country: CountrydleDay,
     user: User | None,
@@ -107,7 +107,12 @@ async def ask_question(
 ) -> Tuple[QuestionCreate, List[float]]:
 
     fragments, question_vector = await get_fragments_matching_question(
-        question.question, "country_id", day_country.country_id, "countries", session, limit=qdrant.COUNTRYDLE_CONTEXT_LIMIT
+        question.question,
+        "country_id",
+        day_country.country_id,
+        "countries",
+        session,
+        limit=qdrant.COUNTRYDLE_CONTEXT_LIMIT,
     )
     context = "\n[ ... ]\n".join(fragment.text for fragment in fragments)
     country: Country = await CountryRepository(session).get(day_country.country_id)
