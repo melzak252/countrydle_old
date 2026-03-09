@@ -32,6 +32,13 @@ const PortalTooltip = ({ children, content, position = 'top', className }: Porta
          top = rect.bottom;
       }
       
+      // Ensure tooltip doesn't go off-screen horizontally
+      const tooltipWidth = 320; // Approximate max width
+      const padding = 20;
+      const minLeft = tooltipWidth / 2 + padding;
+      const maxLeft = window.innerWidth - (tooltipWidth / 2 + padding);
+      left = Math.max(minLeft, Math.min(maxLeft, left));
+      
       setCoords({ top, left });
     }
   };

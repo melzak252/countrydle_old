@@ -185,12 +185,21 @@ async def get_state(
             wojewodztwo=wojewodztwo,
         )
 
+    questions_display = [
+        (
+            WojewodztwoQuestionDisplay.model_validate(question)
+            if question.valid
+            else WojewodztwoQuestionDisplay.model_validate(question)
+        )
+        for question in questions
+    ]
+
     return WojewodztwodleStateResponse(
         user=user,
         date=str(day_state.date),
         state=WojewodztwodleStateSchema.model_validate(state),
         guesses=guesses,
-        questions=questions,
+        questions=questions_display,
         wojewodztwo=None,
     )
 

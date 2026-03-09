@@ -181,12 +181,17 @@ async def get_state(
             us_state=us_state,
         )
 
+    questions_display = [
+        USStateQuestionDisplay.model_validate(question)
+        for question in questions
+    ]
+
     return USStatedleStateResponse(
         user=user,
         date=str(day_state.date),
         state=USStatedleStateSchema.model_validate(state),
         guesses=guesses,
-        questions=questions,
+        questions=questions_display,
         us_state=None,
     )
 

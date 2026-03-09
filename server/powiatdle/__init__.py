@@ -181,12 +181,17 @@ async def get_state(
             powiat=powiat,
         )
 
+    questions_display = [
+        PowiatQuestionDisplay.model_validate(question)
+        for question in questions
+    ]
+
     return PowiatdleStateResponse(
         user=user,
         date=str(day_powiat.date),
         state=PowiatdleStateSchema.model_validate(state),
         guesses=guesses,
-        questions=questions,
+        questions=questions_display,
         powiat=None,
     )
 

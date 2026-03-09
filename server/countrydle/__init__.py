@@ -239,7 +239,7 @@ async def get_state(
 
     questions_display = [
         (
-            QuestionDisplay.model_validate(question)
+            FullQuestionDisplay.model_validate(question)
             if question.valid
             else InvalidQuestionDisplay.model_validate(question)
         )
