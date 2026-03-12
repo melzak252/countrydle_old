@@ -53,8 +53,8 @@ export const authService = {
 
 
 export const gameService = {
-  getLeaderboard: async (): Promise<any[]> => {
-    const response = await api.get('/countrydle/statistics/leaderboard');
+  getLeaderboard: async (type: 'monthly' | 'average' = 'monthly'): Promise<any[]> => {
+    const response = await api.get(`/countrydle/statistics/leaderboard?type=${type}`);
     return response.data;
   },
   getUserStats: async (username: string): Promise<any> => {
@@ -112,8 +112,8 @@ export const powiatService = {
     const response = await api.post('/powiatdle/guess', { guess, powiat_id });
     return response.data;
   },
-  getLeaderboard: async (): Promise<any[]> => {
-    const response = await api.get('/powiatdle/leaderboard');
+  getLeaderboard: async (type: 'monthly' | 'average' = 'monthly'): Promise<any[]> => {
+    const response = await api.get(`/powiatdle/leaderboard?type=${type}`);
     return response.data;
   },
   getHistory: async (): Promise<any[]> => {
@@ -147,8 +147,8 @@ export const usStateService = {
     const response = await api.post('/us_statedle/guess', { guess, us_state_id });
     return response.data;
   },
-  getLeaderboard: async (): Promise<any[]> => {
-    const response = await api.get('/us_statedle/leaderboard');
+  getLeaderboard: async (type: 'monthly' | 'average' = 'monthly'): Promise<any[]> => {
+    const response = await api.get(`/us_statedle/leaderboard?type=${type}`);
     return response.data;
   },
   getHistory: async (): Promise<any[]> => {
@@ -182,8 +182,8 @@ export const wojewodztwoService = {
     const response = await api.post('/wojewodztwodle/guess', { guess, wojewodztwo_id });
     return response.data;
   },
-  getLeaderboard: async (): Promise<any[]> => {
-    const response = await api.get('/wojewodztwodle/leaderboard');
+  getLeaderboard: async (type: 'monthly' | 'average' = 'monthly'): Promise<any[]> => {
+    const response = await api.get(`/wojewodztwodle/leaderboard?type=${type}`);
     return response.data;
   },
   getHistory: async (): Promise<any[]> => {

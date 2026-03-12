@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { gameService, powiatService, usStateService, wojewodztwoService } from '../services/api';
-import { Loader2, Medal, Globe, Map, Flag, MapPin } from 'lucide-react';
+import { Loader2, Medal, Globe, Map, Flag, MapPin, Calendar, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
 
 type GameType = 'country' | 'powiat' | 'us_state' | 'wojewodztwo';
+type LeaderboardType = 'monthly' | 'average';
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [gameType, setGameType] = useState<GameType>('country');
+  const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>('monthly');
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -18,10 +20,10 @@ export default function LeaderboardPage() {
     const fetchLeaderboard = async () => {
         try {
             let data = [];
-            if (gameType === 'country') data = await gameService.getLeaderboard();
-            else if (gameType === 'powiat') data = await powiatService.getLeaderboard();
-            else if (gameType === 'us_state') data = await usStateService.getLeaderboard();
-            else if (gameType === 'wojewodztwo') data = await wojewodztwoService.getLeaderboard();
+            if (gameType === 'country') data = await gameService.getLeaderboard(leaderboardType);
+            else if (gameType === 'powiat') data = await powiatService.getLeaderboard(leaderboardType);
+            else if (gameType === 'us_state') data = await usStateService.getLeaderboard(leaderboardType);
+            else if (gameType === 'wojewodztwo') data = await wojewodztwoService.getLeaderboard(leaderboardType);
             setLeaderboard(data);
         } catch (e) {
             console.error(e);
@@ -30,7 +32,7 @@ export default function LeaderboardPage() {
         }
     };
     fetchLeaderboard();
-  }, [gameType]);
+  }, [gameType, leaderboardType]);
 
   const tabs = [
     { id: 'country', label: t('tabs.countries'), icon: Globe },
@@ -46,7 +48,7 @@ export default function LeaderboardPage() {
         <h2 className="text-3xl font-bold">{t('leaderboard.title')}</h2>
       </div>
 
-      <div className="flex justify-center gap-2 mb-8 flex-wrap">
+      <div className="flex justify-center gap-2 mb-4 flex-wrap">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -64,6 +66,33 @@ export default function LeaderboardPage() {
         ))}
       </div>
 
+      <div className="flex justify-center gap-2 mb-8">
+        <button
+          onClick={() => setLeaderboardType('monthly')}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-full transition-all border text-sm",
+            leaderboardType === 'monthly'
+              ? "bg-zinc-800 border-zinc-700 text-white"
+              : "bg-transparent border-transparent text-zinc-500 hover:text-zinc-300"
+          )}
+        >
+          <Calendar size={14} />
+          <span className="font-medium">Monthly</span>
+        </button>
+        <button
+          onClick={() => setLeaderboardType('average')}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-full transition-all border text-sm",
+            leaderboardType === 'average'
+              ? "bg-zinc-800 border-zinc-700 text-white"
+              : "bg-transparent border-transparent text-zinc-500 hover:text-zinc-300"
+          )}
+        >
+          <Activity size={14} />
+          <span className="font-medium">Average</span>
+        </button>
+      </div>
+
       {loading ? (
         <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-500" size={48} /></div>
       ) : (
@@ -73,8 +102,17 @@ export default function LeaderboardPage() {
               <tr>
                 <th className="px-6 py-4 font-medium w-16 text-center">#</th>
                 <th className="px-6 py-4 font-medium">{t('leaderboard.player')}</th>
-                <th className="px-6 py-4 font-medium text-right">{t('leaderboard.points')}</th>
-                <th className="px-6 py-4 font-medium text-right">{t('leaderboard.wins')}</th>
+                {leaderboardType === 'monthly' ? (
+                  <>
+                    <th className="px-6 py-4 font-medium text-right">{t('leaderboard.points')}</th>
+                    <th className="px-6 py-4 font-medium text-right">{t('leaderboard.wins')}</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="px-6 py-4 font-medium text-right">Avg Points</th>
+                    <th className="px-6 py-4 font-medium text-right">Games</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
@@ -92,12 +130,25 @@ export default function LeaderboardPage() {
                       {entry.username}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-right font-mono text-yellow-500 font-bold">
-                    {entry.points}
-                  </td>
-                  <td className="px-6 py-4 text-right font-mono text-green-500">
-                    {entry.wins}
-                  </td>
+                  {leaderboardType === 'monthly' ? (
+                    <>
+                      <td className="px-6 py-4 text-right font-mono text-yellow-500 font-bold">
+                        {entry.points}
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono text-green-500">
+                        {entry.wins}
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-6 py-4 text-right font-mono text-yellow-500 font-bold">
+                        {entry.average_points}
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono text-zinc-400">
+                        {entry.games_played}
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>

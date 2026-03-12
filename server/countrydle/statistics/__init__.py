@@ -27,8 +27,8 @@ async def gey_history(session: AsyncSession = Depends(get_db)):
 
 
 @router.get("/leaderboard", response_model=list[LeaderboardEntry])
-async def get_leaderboard(session: AsyncSession = Depends(get_db)):
-    leaderboard = await CountrydleRepository(session).get_leaderboard()
+async def get_leaderboard(type: str = "monthly", session: AsyncSession = Depends(get_db)):
+    leaderboard = await CountrydleRepository(session).get_leaderboard(type)
     return leaderboard
 
 

@@ -144,54 +144,109 @@ class CountrydleRepository:
 
         return countries_with_count
 
-    async def get_leaderboard(self):
+    async def get_leaderboard(self, type: str = "monthly"):
         cs = aliased(CountrydleState)
         up = aliased(UserPoints)
-        stmt = (
-            select(
-                User.id,
-                User.username,
-                func.coalesce(up.points, 0).label("points"),
-                func.coalesce(func.sum(cs.won.cast(Integer)), 0).label("wins"),
-                func.coalesce(up.streak, 0).label("streak"),
-            )
-            .outerjoin(up, User.id == up.user_id)
-            .outerjoin(cs, User.id == cs.user_id)
-            .where(
-                and_(
-                    User.username.not_like("test_%"),
-                    User.username.not_like("pytest_%"),
-                    User.username.not_like("guess_c_%"),
-                    User.username.not_like("ask_q_%"),
+        cd = aliased(CountrydleDay)
+
+        if type == "monthly":
+            current_month = date.today().replace(day=1)
+            stmt = (
+                select(
+                    User.id,
+                    User.username,
+                    func.coalesce(func.sum(cs.points), 0).label("points"),
+                    func.coalesce(func.sum(cs.won.cast(Integer)), 0).label("wins"),
+                    func.coalesce(up.streak, 0).label("streak"),
+                )
+                .join(cs, User.id == cs.user_id)
+                .join(cd, cs.day_id == cd.id)
+                .outerjoin(up, User.id == up.user_id)
+                .where(
+                    and_(
+                        User.username.not_like("test_%"),
+                        User.username.not_like("pytest_%"),
+                        User.username.not_like("guess_c_%"),
+                        User.username.not_like("ask_q_%"),
+                        cd.date >= current_month,
+                    )
+                )
+                .group_by(
+                    User.id,
+                    User.username,
+                    up.streak,
+                )
+                .order_by(
+                    func.coalesce(func.sum(cs.points), 0).desc(),
+                    func.coalesce(func.sum(cs.won.cast(Integer)), 0).desc(),
+                    func.coalesce(up.streak, 0).desc(),
                 )
             )
-            .group_by(
-                User.id,
-                User.username,
-                up.points,
-                up.streak,
-            )
-            .order_by(
-                func.coalesce(up.points, 0).desc(),
-                func.coalesce(func.sum(cs.won.cast(Integer)), 0).desc(),
-                func.coalesce(up.streak, 0).desc(),
-            )
-        )
 
-        result = await self.session.execute(stmt)
+            result = await self.session.execute(stmt)
 
-        leaderboard = [
-            LeaderboardEntry(
-                id=row.id,
-                username=row.username,
-                points=row.points,
-                streak=row.streak,
-                wins=row.wins,
+            leaderboard = [
+                LeaderboardEntry(
+                    id=row.id,
+                    username=row.username,
+                    points=row.points,
+                    streak=row.streak,
+                    wins=row.wins,
+                )
+                for row in result.all()
+            ]
+
+            return leaderboard
+
+        elif type == "average":
+            stmt = (
+                select(
+                    User.id,
+                    User.username,
+                    func.coalesce(func.sum(cs.points), 0).label("points"),
+                    func.coalesce(func.sum(cs.won.cast(Integer)), 0).label("wins"),
+                    func.count(cs.id).label("games_played"),
+                    func.coalesce(up.streak, 0).label("streak"),
+                )
+                .join(cs, User.id == cs.user_id)
+                .outerjoin(up, User.id == up.user_id)
+                .where(
+                    and_(
+                        User.username.not_like("test_%"),
+                        User.username.not_like("pytest_%"),
+                        User.username.not_like("guess_c_%"),
+                        User.username.not_like("ask_q_%"),
+                        cs.is_game_over == True,
+                    )
+                )
+                .group_by(
+                    User.id,
+                    User.username,
+                    up.streak,
+                )
+                .having(func.count(cs.id) >= 5)
             )
-            for row in result.all()
-        ]
 
-        return leaderboard
+            result = await self.session.execute(stmt)
+
+            leaderboard = []
+            for row in result.all():
+                avg_points = row.points / row.games_played if row.games_played > 0 else 0
+                leaderboard.append({
+                    "id": row.id,
+                    "username": row.username,
+                    "points": row.points,
+                    "streak": row.streak,
+                    "wins": row.wins,
+                    "average_points": round(avg_points, 2),
+                    "games_played": row.games_played,
+                })
+
+            leaderboard.sort(key=lambda x: x["average_points"], reverse=True)
+
+            return [LeaderboardEntry(**entry) for entry in leaderboard]
+
+        return []
 
     async def get_user_statistics(self, user: User) -> UserStatistics:
         up = await UserRepository(self.session).get_user_points(user.id)

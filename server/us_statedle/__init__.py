@@ -200,8 +200,8 @@ from schemas.countrydle import LeaderboardEntry
 
 
 @router.get("/leaderboard", response_model=List[LeaderboardEntry])
-async def get_leaderboard(session: AsyncSession = Depends(get_db)):
-    return await USStatedleStateRepository(session).get_leaderboard()
+async def get_leaderboard(type: str = "monthly", session: AsyncSession = Depends(get_db)):
+    return await USStatedleStateRepository(session).get_leaderboard(type)
 
 
 @router.get("/states", response_model=List[USStateDisplay])
