@@ -277,7 +277,7 @@ class CountrydleRepository:
                 won=state.won,
                 points=state.points,
                 attempts=state.guesses_made,
-                target_name=state.day.country.name if state.won else "???",
+                target_name=state.day.country.name if state.day.date != date.today() else "???",
             )
             for state in history_states
         ]
