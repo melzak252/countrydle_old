@@ -41,10 +41,12 @@ export default function PowiatyMap({ correctPowiatName, className }: PowiatyMapP
   const geoJsonLayerRef = useRef<L.GeoJSON | null>(null);
   
   useEffect(() => {
-    fetch('/powiaty-min.geojson')
+    fetch('/powiaty-min.geojson?v=' + new Date().getTime())
       .then(res => res.json())
-      .then(data => setGeoJsonData(data))
-      .catch(err => console.error('Failed to load powiaty map data', err));
+      .then(data => {
+        setGeoJsonData(data);
+      })
+      .catch(err => console.error("Error loading geojson:", err));
   }, []);
 
   const getStyleFromState = (feature: any, currentSelected: string[], currentCorrect?: string): PathOptions => {
