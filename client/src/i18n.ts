@@ -189,7 +189,6 @@ const resources = {
         chooseMapTitle: 'Choose Your Map',
         chooseMapText: 'Pick a territory and start your challenge.',
         playNow: 'Play Now',
-        statsCountries: 'Countries & States',
         statsDaily: 'Daily',
         statsChallenges: 'New Challenges',
         games: {
@@ -464,7 +463,6 @@ const resources = {
         chooseMapTitle: 'Wybierz mape',
         chooseMapText: 'Wybierz obszar i zacznij wyzwanie.',
         playNow: 'Graj teraz',
-        statsCountries: 'Kraje i stany',
         statsDaily: 'Codziennie',
         statsChallenges: 'Nowe wyzwania',
         games: {

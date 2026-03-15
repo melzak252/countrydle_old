@@ -167,11 +167,7 @@ export default function HomePage() {
         transition={{ delay: 0.5 }}
         className="mt-32 p-12 bg-zinc-900 border border-zinc-800 rounded-[3rem] text-center"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div>
-            <div className="text-4xl font-black mb-2">250+</div>
-            <div className="text-zinc-500 uppercase tracking-widest text-xs font-bold">{t('home.statsCountries')}</div>
-          </div>
+        <div className="flex justify-center">
           <div>
             <div className="text-4xl font-black mb-2">{t('home.statsDaily')}</div>
             <div className="text-zinc-500 uppercase tracking-widest text-xs font-bold">{t('home.statsChallenges')}</div>

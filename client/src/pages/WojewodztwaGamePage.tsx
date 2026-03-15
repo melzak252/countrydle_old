@@ -120,19 +120,19 @@ export default function WojewodztwaGamePage() {
             {/* Input Section - Only for Mobile now */}
             {!gameState.is_game_over && (
                 <div className="lg:hidden space-y-3 md:space-y-4 max-w-3xl mx-auto w-full">
-                    <QuestionInput 
-                        onAsk={askQuestion} 
-                        isLoading={isLoading} 
-                        remainingQuestions={gameState.remaining_questions} 
-                        placeholder={t('wojewodztwaPage.askPlaceholder', { count: gameState.remaining_questions })}
-                    />
-                    
                     <GuessInput 
                         countries={wojewodztwa} 
                         onGuess={async (id, name) => makeGuess(name, id)} 
                         isLoading={isLoading} 
                         remainingGuesses={gameState.remaining_guesses} 
                         placeholder={t('wojewodztwaPage.guessPlaceholder', { count: gameState.remaining_guesses })}
+                    />
+
+                    <QuestionInput 
+                        onAsk={askQuestion} 
+                        isLoading={isLoading} 
+                        remainingQuestions={gameState.remaining_questions} 
+                        placeholder={t('wojewodztwaPage.askPlaceholder', { count: gameState.remaining_questions })}
                     />
                 </div>
             )}
@@ -163,7 +163,7 @@ export default function WojewodztwaGamePage() {
                     <span className="text-xs text-zinc-500 bg-zinc-900 px-2 py-1 rounded-md border border-zinc-800">{guesses.length}</span>
                 </div>
                 
-                <div className="flex flex-col flex-1 overflow-hidden">
+                <div className="flex flex-col flex-1">
                     {!gameState.is_game_over && (
                         <div className="p-4 pb-2 border-b border-zinc-800/50">
                             <GuessInput 

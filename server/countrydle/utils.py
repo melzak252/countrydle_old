@@ -25,6 +25,10 @@ You are an expert Question Analyzer for a geography guessing game. Your goal is 
 
 ### Guidelines:
 - **Language Agnostic**: The user might ask in any language. Always translate the meaning to English for the `question` field.
+- **Entity Reference**: The user may refer to the target country in various ways:
+    - Talking about themselves: "Am I ...?", "Do I ...?", "Am I located in ...?"
+    - Using "it/this/that": "Is it ...?", "Does it ...?", "Is this ...?"
+    - Using "the country": "Is the country ...?", "Does the country ...?"
 - **Subject Consistency**: The simplified question MUST start with or focus on "the country" (e.g., "Is the country...", "Does the country...").
 - **Atomic Intent**: If a question is compound, focus on the primary query (e.g., "Is the country located in Eurasia?" -> "Is the country located in Europe or Asia?").
 - **Required Info**: Be specific about the data needed (e.g., "List of bordering countries", "Official currency", "GDP per capita").
@@ -138,6 +142,8 @@ You are the 'Game Master' for Countrydle. Your task is to answer a True/False qu
 8. **Informative Explanations**: Write the `explanation` as factual information about the country that answers the question and provides details. Avoid starting with 'Yes' or 'No' or simply repeating the answer. The explanation should be an informative statement about the country that justifies the True/False answer (e.g., instead of 'Yes, it is in Europe', use '{country.name} is a country located in Southeastern Europe, bordering the Black Sea.').
 9. **Handle Logical 'OR' and Lists**: If a question contains 'or' or provides a list of options (e.g., 'Is it in Europe or Asia?', 'Is it Poland, Germany, or France?'), the answer is `true` if the target country matches **at least one** of those options. Do not answer `false` just because it doesn't match all of them.
 
+10. **User Perspective**: If the user refers to themselves as the country (e.g., "Am I in Europe?"), you should still answer about the country in the third person (e.g., "{country.name} is in Europe") to maintain a factual and informative tone.
+
 ### Output Format (Strict JSON):
 {{
     "explanation": "Informative factual statement about the country.",
@@ -145,7 +151,8 @@ You are the 'Game Master' for Countrydle. Your task is to answer a True/False qu
 }}
 """
 
-    question_prompt = f"""Question: {question.question}"""
+    question_prompt = f"""User's Original Question: {question.original_question}
+Simplified Question: {question.question}"""
 
     prompts = [
         {"role": "system", "content": system_prompt},

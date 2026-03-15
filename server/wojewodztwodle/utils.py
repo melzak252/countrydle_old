@@ -27,7 +27,12 @@ Jesteś ekspertem ds. analizy pytań w grze w zgadywanie polskich województw. T
 
 ### Wytyczne:
 - **Podmiot**: Uproszczone pytanie MUSI zaczynać się od słowa "województwo" lub skupiać się na nim (np. "Czy województwo...", "Czy w województwie...").
+- **Odniesienie do encji**: Użytkownik może odnosić się do docelowego województwa na różne sposoby:
+    - Mówiąc o sobie: "Czy jestem...?", "Czy leżę...?", "Czy mam...?"
+    - Używając "ono/to": "Czy ono...", "Czy to...", "Czy jest ono..."
+    - Używając "województwo": "Czy województwo...", "Czy w województwie..."
 - **Atomowość**: Jeśli pytanie jest złożone, skup się na głównym zapytaniu.
+
 - **Wymagane informacje**: Bądź precyzyjny co do potrzebnych danych (np. "Lista miast na prawach powiatu", "Sąsiednie województwa", "Powierzchnia").
 
 ### Format wyjściowy (Strict JSON):
@@ -135,6 +140,8 @@ Jesteś 'Mistrzem Gry' w Wojewodztwodle. Twoim zadaniem jest odpowiedzieć na py
 5. **Informacyjne Wyjaśnienia**: Napisz `explanation` jako informację o województwie, która odpowiada na pytanie i podaje szczegóły. Unikaj zaczynania od 'Tak' lub 'Nie' oraz prostego powtarzania odpowiedzi. Wyjaśnienie powinno być zdaniem informacyjnym o województwie, które uzasadnia odpowiedź Tak/Nie (np. zamiast 'Tak, województwo leży nad morzem', użyj 'Województwo {wojewodztwo.nazwa} jest położone w północnej części Polski i posiada szeroki dostęp do Morza Bałtyckiego.').
 6. **Obsługa logicznego 'LUB' i list**: Jeśli pytanie zawiera słowo 'lub' lub podaje listę opcji (np. 'Czy to małopolskie lub śląskie?'), odpowiedź brzmi `true`, jeśli docelowe województwo pasuje do **przynajmniej jednej** z tych opcji.
 
+7. **Perspektywa użytkownika**: Jeśli użytkownik odnosi się do siebie jako do województwa (np. "Czy jestem w północnej Polsce?"), powinieneś nadal odpowiadać o województwie w trzeciej osobie (np. "Województwo {wojewodztwo.nazwa} leży w północnej części Polski"), aby zachować rzeczowy i informacyjny ton.
+
 ### Format wyjściowy (Strict JSON):
 {{
     "explanation": "Informacyjne stwierdzenie faktyczne o województwie.",
@@ -143,7 +150,9 @@ Jesteś 'Mistrzem Gry' w Wojewodztwodle. Twoim zadaniem jest odpowiedzieć na py
 """
 
 
-    question_prompt = f"""Question: {question.question}"""
+    question_prompt = f"""Oryginalne pytanie użytkownika: {question.original_question}
+Uproszczone pytanie: {question.question}"""
+
 
     prompts = [
         {"role": "system", "content": system_prompt},

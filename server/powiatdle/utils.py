@@ -24,7 +24,12 @@ Jesteś ekspertem ds. analizy pytań w grze w zgadywanie polskich powiatów. Two
 
 ### Wytyczne:
 - **Podmiot**: Uproszczone pytanie MUSI zaczynać się od słowa "powiat" lub skupiać się na nim (np. "Czy powiat...", "Czy w powiecie...").
+- **Odniesienie do encji**: Użytkownik może odnosić się do docelowego powiatu na różne sposoby:
+    - Mówiąc o sobie: "Czy jestem...?", "Czy leżę...?", "Czy mam...?"
+    - Używając "on/to": "Czy on...", "Czy to...", "Czy jest on..."
+    - Używając "powiat": "Czy powiat...", "Czy w powiecie..."
 - **Atomowość**: Jeśli pytanie jest złożone, skup się na głównym zapytaniu.
+
 - **Wymagane informacje**: Bądź precyzyjny co do potrzebnych danych (np. "Lista powiatów sąsiadujących", "Nazwa województwa", "Liczba ludności").
 
 ### Format wyjściowy (Strict JSON):
@@ -125,6 +130,8 @@ Jesteś 'Mistrzem Gry' w Powiatdle. Twoim zadaniem jest odpowiedzieć na pytanie
 5. **Informacyjne Wyjaśnienia**: Napisz `explanation` jako informację o powiecie, która odpowiada na pytanie i podaje szczegóły. Unikaj zaczynania od 'Tak' lub 'Nie' oraz prostego powtarzania odpowiedzi. Wyjaśnienie powinno być zdaniem informacyjnym o powiecie, które uzasadnia odpowiedź Tak/Nie (np. zamiast 'Tak, powiat leży w małopolskim', użyj 'Powiat {powiat.nazwa} znajduje się w województwie małopolskim, w południowej części kraju.').
 6. **Obsługa logicznego 'LUB' i list**: Jeśli pytanie zawiera słowo 'lub' lub podaje listę opcji (np. 'Czy to powiat krakowski lub wielicki?'), odpowiedź brzmi `true`, jeśli docelowy powiat pasuje do **przynajmniej jednej** z tych opcji.
 
+7. **Perspektywa użytkownika**: Jeśli użytkownik odnosi się do siebie jako do powiatu (np. "Czy jestem w małopolskim?"), powinieneś nadal odpowiadać o powiecie w trzeciej osobie (np. "Powiat {powiat.nazwa} leży w województwie małopolskim"), aby zachować rzeczowy i informacyjny ton.
+
 ### Format wyjściowy (Strict JSON):
 {{
     "explanation": "Informacyjne stwierdzenie faktyczne o powiecie.",
@@ -133,7 +140,9 @@ Jesteś 'Mistrzem Gry' w Powiatdle. Twoim zadaniem jest odpowiedzieć na pytanie
 """
 
 
-    question_prompt = f"""Question: {question.question}"""
+    question_prompt = f"""Oryginalne pytanie użytkownika: {question.original_question}
+Uproszczone pytanie: {question.question}"""
+
 
     prompts = [
         {"role": "system", "content": system_prompt},
